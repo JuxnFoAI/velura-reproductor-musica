@@ -1,0 +1,42 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Biblioteca personal (MP3, portadas y letras propias)
+# ** ignora todo el árbol; las excepciones ! solo dejan pasar estructura y ejemplo/
+/mi-musica/**
+!/mi-musica/.gitkeep
+!/mi-musica/README.md
+!/mi-musica/portadas de canciones/
+!/mi-musica/portadas de canciones/.gitkeep
+!/mi-musica/Letras de canciones/
+!/mi-musica/Letras de canciones/.gitkeep
+!/mi-musica/ejemplo/
+!/mi-musica/ejemplo/**
+!/mi-musica/ejemplo/portadas de canciones/
+!/mi-musica/ejemplo/portadas de canciones/**
+!/mi-musica/ejemplo/Letras de canciones/
+!/mi-musica/ejemplo/Letras de canciones/**
+!/mi-musica/cover-overrides.example.json
+/mi-musica/cover-overrides.json
