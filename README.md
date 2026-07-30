@@ -23,8 +23,8 @@ Reproductor de música local con motor Web Audio, biblioteca indexada desde disc
 ## Instalación
 
 ```bash
-git clone <url-del-repositorio>
-cd reproductor-of-music
+git clone https://github.com/JuxnFoAI/velura.git
+cd velura
 npm install
 ```
 
@@ -130,6 +130,6 @@ No deben aparecer MP3, `.lrc` ni portadas fuera de `mi-musica/ejemplo/`. Luego:
 git add .
 git commit -m "Initial commit: Velura v1.0.0"
 git branch -M main
-git remote add origin <url-del-repositorio>
+git remote add origin https://github.com/JuxnFoAI/velura.git
 git push -u origin main
 ```
