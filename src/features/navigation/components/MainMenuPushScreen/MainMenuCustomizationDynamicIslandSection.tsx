@@ -1,6 +1,6 @@
 /** Sección de personalización de la Isla dinámica con toggle y colores. */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Check } from 'lucide-react'
 
 import {
@@ -10,6 +10,7 @@ import {
   type DynamicIslandColorId,
   type DynamicIslandColorOption,
 } from '@features/customization'
+import { usePreviewState } from '@hooks/usePreviewState'
 
 interface DynamicIslandColorOptionButtonProps {
   option: DynamicIslandColorOption
@@ -73,16 +74,10 @@ export function MainMenuCustomizationDynamicIslandSection() {
   const setDynamicIslandEnabled = useCustomizationStore((state) => state.setDynamicIslandEnabled)
   const setDynamicIslandColor = useCustomizationStore((state) => state.setDynamicIslandColor)
 
-  const [previewColorId, setPreviewColorId] = useState<DynamicIslandColorId>(
-    appliedDynamicIslandColorId,
-  )
+  const [previewColorId, setPreviewColorId] = usePreviewState(appliedDynamicIslandColorId)
   const [applyError, setApplyError] = useState<string | null>(null)
 
   const previewColor = getDynamicIslandColorById(previewColorId)
-
-  useEffect(() => {
-    setPreviewColorId(appliedDynamicIslandColorId)
-  }, [appliedDynamicIslandColorId])
 
   const handleToggleEnabled = useCallback((): void => {
     setDynamicIslandEnabled(!isDynamicIslandEnabled)
@@ -91,7 +86,7 @@ export function MainMenuCustomizationDynamicIslandSection() {
   const handleSelectColor = useCallback((colorId: DynamicIslandColorId): void => {
     setApplyError(null)
     setPreviewColorId(colorId)
-  }, [])
+  }, [setPreviewColorId])
 
   const handleApplyColor = useCallback((): void => {
     setApplyError(null)

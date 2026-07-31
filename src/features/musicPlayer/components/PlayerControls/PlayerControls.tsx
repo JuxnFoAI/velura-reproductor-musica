@@ -3,11 +3,13 @@ import { memo } from 'react'
 import { Shuffle, SkipBack, SkipForward } from 'lucide-react'
 import { LyricsToggleButton } from './LyricsToggleButton'
 import { FavoriteButton } from './FavoriteButton'
+import { FullscreenButton } from './FullscreenButton'
 import { PlayPauseButton } from './PlayPauseButton'
 import { ProgressBar } from './ProgressBar'
 import { VolumeControl } from './VolumeControl'
 import { ControlButton } from './ControlButton'
 import { useTransportControls } from '../../hooks/useTransportControls'
+import { useDesktopFullscreen } from '../../hooks/useDesktopFullscreen'
 import { usePlayerStore } from '../../store/playerStore'
 
 interface PlayerControlsProps {
@@ -38,11 +40,14 @@ export const PlayerControls = memo(function PlayerControls({ className }: Player
     handlePlayPause,
   } = useTransportControls()
 
+  const { isAvailable: isFullscreenAvailable, isFullscreen, toggleFullscreen } =
+    useDesktopFullscreen()
+
   const isFavorite = currentTrack !== null && favoriteTrackIds.includes(currentTrack.id)
 
   return (
     <section
-      className={`flex w-full flex-col gap-4 ${className ?? ''}`}
+      className={`flex w-full flex-col gap-2 ${className ?? ''}`}
       aria-label="Controles del reproductor"
     >
       <ProgressBar disabled={isDisabled} />
@@ -87,6 +92,14 @@ export const PlayerControls = memo(function PlayerControls({ className }: Player
         </div>
 
         <div className="flex items-center justify-end gap-2 justify-self-end">
+          {isFullscreenAvailable ? (
+            <FullscreenButton
+              isFullscreen={isFullscreen}
+              onClick={() => {
+                void toggleFullscreen()
+              }}
+            />
+          ) : null}
           <FavoriteButton
             isFavorite={isFavorite}
             disabled={isDisabled}

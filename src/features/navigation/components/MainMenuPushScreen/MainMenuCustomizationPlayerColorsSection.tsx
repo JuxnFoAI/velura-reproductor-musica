@@ -1,6 +1,6 @@
 /** Sección de colores del reproductor con color de letra y color de botones. */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Check } from 'lucide-react'
 
 import {
@@ -17,6 +17,7 @@ import {
   type PlayerLetterColorId,
   type PlayerLetterColorOption,
 } from '@features/customization'
+import { usePreviewState } from '@hooks/usePreviewState'
 
 import { PlayerButtonColorPreviewPanel } from './PlayerButtonColorPreviewPanel'
 import { PlayerLetterColorPreviewPanel } from './PlayerLetterColorPreviewPanel'
@@ -83,24 +84,12 @@ export function MainMenuCustomizationPlayerColorsSection() {
   const setPlayerButtonColor = useCustomizationStore((state) => state.setPlayerButtonColor)
 
   const [activeCategory, setActiveCategory] = useState<PlayerColorCategory>('letter')
-  const [previewLetterColorId, setPreviewLetterColorId] = useState<PlayerLetterColorId>(
-    appliedPlayerLetterColorId,
-  )
-  const [previewButtonColorId, setPreviewButtonColorId] = useState<PlayerButtonColorId>(
-    appliedPlayerButtonColorId,
-  )
+  const [previewLetterColorId, setPreviewLetterColorId] = usePreviewState(appliedPlayerLetterColorId)
+  const [previewButtonColorId, setPreviewButtonColorId] = usePreviewState(appliedPlayerButtonColorId)
   const [applyError, setApplyError] = useState<string | null>(null)
 
   const previewLetterColor = getPlayerLetterColorById(previewLetterColorId)
   const previewButtonColor = getPlayerButtonColorById(previewButtonColorId)
-
-  useEffect(() => {
-    setPreviewLetterColorId(appliedPlayerLetterColorId)
-  }, [appliedPlayerLetterColorId])
-
-  useEffect(() => {
-    setPreviewButtonColorId(appliedPlayerButtonColorId)
-  }, [appliedPlayerButtonColorId])
 
   const handleSelectCategory = useCallback((category: PlayerColorCategory): void => {
     setActiveCategory(category)
@@ -110,12 +99,12 @@ export function MainMenuCustomizationPlayerColorsSection() {
   const handleSelectLetterColor = useCallback((colorId: PlayerLetterColorId): void => {
     setApplyError(null)
     setPreviewLetterColorId(colorId)
-  }, [])
+  }, [setPreviewLetterColorId])
 
   const handleSelectButtonColor = useCallback((colorId: PlayerButtonColorId): void => {
     setApplyError(null)
     setPreviewButtonColorId(colorId)
-  }, [])
+  }, [setPreviewButtonColorId])
 
   const handleApplyColor = useCallback((): void => {
     setApplyError(null)

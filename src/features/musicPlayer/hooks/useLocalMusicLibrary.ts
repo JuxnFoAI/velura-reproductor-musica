@@ -9,16 +9,19 @@ type LibraryStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'error'
 interface UseLocalMusicLibraryResult {
   status: LibraryStatus
   errorMessage: string | null
+  musicDirectory: string | null
 }
 
 interface LibraryLoadSnapshot {
   status: LibraryStatus
   errorMessage: string | null
+  musicDirectory: string | null
 }
 
 const libraryLoadSnapshot: LibraryLoadSnapshot = {
   status: 'idle',
   errorMessage: null,
+  musicDirectory: null,
 }
 
 let libraryLoadPromise: Promise<void> | null = null
@@ -46,6 +49,7 @@ async function loadLocalMusicLibraryOnce(
 
   libraryLoadSnapshot.status = 'loading'
   libraryLoadSnapshot.errorMessage = null
+  libraryLoadSnapshot.musicDirectory = null
 
   libraryLoadPromise = (async () => {
     try {
@@ -55,11 +59,13 @@ async function loadLocalMusicLibraryOnce(
       await playerStore.getState().restoreSession()
       libraryLoadSnapshot.status = library.tracks.length > 0 ? 'ready' : 'empty'
       libraryLoadSnapshot.errorMessage = null
+      libraryLoadSnapshot.musicDirectory = library.musicDirectory
 
       void enrichMissingTrackDurationsInBackground()
     } catch {
       libraryLoadSnapshot.status = 'error'
       libraryLoadSnapshot.errorMessage = 'No se pudo acceder a la biblioteca mi-musica.'
+      libraryLoadSnapshot.musicDirectory = null
     }
   })()
 
@@ -73,6 +79,9 @@ export function useLocalMusicLibrary(): UseLocalMusicLibraryResult {
   const loadLibraryTracks = usePlayerStore((state) => state.loadLibraryTracks)
   const [status, setStatus] = useState<LibraryStatus>(libraryLoadSnapshot.status)
   const [errorMessage, setErrorMessage] = useState<string | null>(libraryLoadSnapshot.errorMessage)
+  const [musicDirectory, setMusicDirectory] = useState<string | null>(
+    libraryLoadSnapshot.musicDirectory,
+  )
 
   useEffect(() => {
     let isCancelled = false
@@ -84,6 +93,7 @@ export function useLocalMusicLibrary(): UseLocalMusicLibraryResult {
 
       setStatus(libraryLoadSnapshot.status)
       setErrorMessage(libraryLoadSnapshot.errorMessage)
+      setMusicDirectory(libraryLoadSnapshot.musicDirectory)
     }
 
     syncSnapshot()
@@ -100,6 +110,7 @@ export function useLocalMusicLibrary(): UseLocalMusicLibraryResult {
   return {
     status,
     errorMessage,
+    musicDirectory,
   }
 }
 

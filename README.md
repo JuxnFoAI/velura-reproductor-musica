@@ -56,7 +56,49 @@ npm run build
 npm run preview
 ```
 
-> **Importante:** La biblioteca musical requiere el servidor de Vite (dev o preview) porque los endpoints `/api/music/*` sirven los archivos desde `mi-musica/`. Un build estático (`dist/`) por sí solo no incluye la API de biblioteca.
+`npm run preview` sirve el bundle estático de `dist/` en el navegador. **No incluye la biblioteca musical**: el plugin `/api/music/*` solo se activa en `npm run dev` (ver `vite.config.ts`).
+
+| Objetivo | Comando |
+|----------|---------|
+| Desarrollo en navegador con `mi-musica/` | `npm run dev` |
+| Ver el bundle de producción en navegador (sin biblioteca) | `npm run build` + `npm run preview` |
+| Probar build completo con biblioteca local | `npm run electron:start` |
+
+> **Importante:** En el navegador, la biblioteca musical requiere `npm run dev` porque los endpoints `/api/music/*` sirven los archivos desde `mi-musica/`. La **app de escritorio** (`electron:dev`, `electron:start` o el instalador) no depende de Vite: usa IPC y el protocolo `velura-media://`.
+
+## App de escritorio (Electron)
+
+### Desarrollo
+
+```bash
+# Terminal 1
+npm run dev
+
+# Terminal 2 (PowerShell; ajusta el puerto si Vite no usa 5173)
+$env:VITE_DEV_SERVER_URL='http://localhost:5173'; npm run electron:dev
+```
+
+### Probar build sin instalador
+
+```bash
+npm run electron:start
+```
+
+Usa `dist/` empaquetado y biblioteca en `%APPDATA%\Velura\mi-musica\`.
+
+### Instalador Windows
+
+```bash
+npm run electron:pack
+```
+
+Genera `release/Velura Setup x.x.x.exe`. Al instalar:
+
+- La app va a Program Files (o la ruta que elija el usuario).
+- En el primer arranque crea `%APPDATA%\Velura\mi-musica\` y copia la pista demo.
+- Reproduce, edita portadas/letras y muestra la isla dinámica sin Vite ni la carpeta del proyecto.
+
+Detalle en [desktop/README.md](./desktop/README.md).
 
 ## Scripts disponibles
 
@@ -64,17 +106,20 @@ npm run preview
 |--------|-------------|
 | `npm run dev` | Servidor de desarrollo con hot reload |
 | `npm run build` | Typecheck + bundle de producción |
-| `npm run preview` | Sirve `dist/` con el plugin de biblioteca |
+| `npm run preview` | Sirve `dist/` estático (sin API de biblioteca) |
+| `npm run electron:dev` | Electron en modo dev (requiere Vite) |
+| `npm run electron:start` | Electron con renderer compilado |
+| `npm run electron:pack` | Instalador NSIS `.exe` en `release/` |
 | `npm run lint` | ESLint sobre todo el proyecto |
 
 ## Estructura del proyecto
 
 ```
 mi-musica/                         # Biblioteca MP3 local (gitignored)
-desktop/                           # Reservado para empaquetado Electron
+shared/musicLibrary/               # Lógica Node compartida (Vite + Electron)
+desktop/                           # Electron: main, preload, IPC, protocolo velura-media
 vite-plugins/
-  musicLibraryPlugin.ts            # API HTTP de biblioteca (dev/preview)
-  musicDirectoryResolver.ts        # Resolución de carpeta mi-musica
+  musicLibraryPlugin.ts            # Capa HTTP sobre shared/musicLibrary
 src/
   App.tsx                          # Raíz de la aplicación
   components/                      # UI compartida (diálogos, botones, intro)
@@ -103,12 +148,8 @@ React 19 · TypeScript · Vite · Zustand · Tailwind CSS · Web Audio API · Lu
 ## Documentación adicional
 
 - [DECISIONS.md](./DECISIONS.md) — Decisiones de diseño y arquitectura
-- [desktop/README.md](./desktop/README.md) — Plan de empaquetado con Electron (próxima fase)
+- [desktop/README.md](./desktop/README.md) — Electron, empaquetado e instalador
 - [mi-musica/README.md](./mi-musica/README.md) — Convenciones de la biblioteca musical
-
-## Próxima fase: Electron
-
-La aplicación está preparada para empaquetarse como app de escritorio. El código ya detecta el entorno desktop (`window.__REPRODUCTOR_DESKTOP__`) y habilita la Isla dinámica. La lógica de `musicLibraryPlugin.ts` deberá migrarse al proceso principal de Electron con IPC.
 
 ## Licencia
 

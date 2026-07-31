@@ -29,8 +29,8 @@ export const DynamicIslandControls = memo(function DynamicIslandControls() {
     <div className="dynamic-island__controls flex w-full flex-col gap-3">
       <ProgressBar disabled={isDisabled} showTimeLabels />
 
-      <div className="flex w-full items-center justify-between gap-2">
-        <VolumeControl className="shrink-0" disabled={isDisabled} />
+      <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <VolumeControl className="justify-self-start" disabled={isDisabled} />
 
         <div className="flex items-center justify-center gap-1">
           <ControlButton
@@ -68,7 +68,10 @@ export const DynamicIslandControls = memo(function DynamicIslandControls() {
           </ControlButton>
         </div>
 
-        <span className="w-[var(--player-control-hit-size)] shrink-0" aria-hidden="true" />
+        <span
+          className="w-[var(--player-control-hit-size)] shrink-0 justify-self-end"
+          aria-hidden="true"
+        />
       </div>
     </div>
   )

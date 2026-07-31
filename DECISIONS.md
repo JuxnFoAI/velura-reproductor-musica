@@ -168,6 +168,16 @@ La excepción versionada es la demo en `ejemplo/` (Duodedos — AFTER), incluida
 
 ---
 
+## ¿Por qué la biblioteca vive en `shared/musicLibrary/`?
+
+La lógica de indexar MP3, portadas y letras en disco debe servir tanto al plugin de Vite (HTTP en dev) como al proceso main de Electron (IPC). Un módulo Node compartido evita duplicar ~1700 líneas y garantiza el mismo comportamiento en web y escritorio.
+
+El plugin `vite-plugins/musicLibraryPlugin.ts` queda como capa delgada: parsea requests HTTP y delega en funciones como `buildMusicLibrary`, `saveTrackCover` o `renameTrack`.
+
+**Si no lo hiciéramos así:** Electron reimplementaría reglas de renombrado, deduplicación y rutas seguras con riesgo de divergencia respecto al dev server.
+
+---
+
 ## ¿Por qué Zustand y no Redux u otro estado global?
 
 El reproductor necesita estado compartido (cola, reproducción, menús) con poco boilerplate. Zustand encaja en un proyecto de este tamaño: stores por dominio, lecturas selectivas, sin providers anidados.

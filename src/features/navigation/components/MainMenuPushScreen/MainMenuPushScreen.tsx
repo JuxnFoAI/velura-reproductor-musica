@@ -131,6 +131,8 @@ export function MainMenuPushScreen() {
   }, [closeMainMenu])
 
   const allSongsOptionsOpen = isAllSongsSection && isAllSongsOptionsOpen
+  const fontsOptionsOpen = isFontsCustomizationSection && isFontsOptionsOpen
+  const audioQualityOptionsOpen = isAudioQualityRootSection && isAudioQualityOptionsOpen
 
   const handleGoBackMainMenu = useCallback((): void => {
     if (isAllSongsSection) {
@@ -172,22 +174,6 @@ export function MainMenuPushScreen() {
     },
     [closeMainMenu, handleGoBackMainMenu, isRootSection],
   )
-
-  useEffect(() => {
-    if (isFontsCustomizationSection) {
-      return
-    }
-
-    setIsFontsOptionsOpen(false)
-  }, [isFontsCustomizationSection])
-
-  useEffect(() => {
-    if (isAudioQualityRootSection) {
-      return
-    }
-
-    setIsAudioQualityOptionsOpen(false)
-  }, [isAudioQualityRootSection])
 
   useEffect(() => {
     if (isAllSongsSection) {
@@ -268,7 +254,7 @@ export function MainMenuPushScreen() {
 
               {isFontsCustomizationSection ? (
                 <MainMenuCustomizationFontsOptionsMenu
-                  isOpen={isFontsOptionsOpen}
+                  isOpen={fontsOptionsOpen}
                   onToggle={handleToggleFontsOptions}
                   onClose={handleCloseFontsOptions}
                 />
@@ -276,7 +262,7 @@ export function MainMenuPushScreen() {
 
               {isAudioQualityRootSection ? (
                 <MainMenuAudioQualityOptionsMenu
-                  isOpen={isAudioQualityOptionsOpen}
+                  isOpen={audioQualityOptionsOpen}
                   onToggle={handleToggleAudioQualityOptions}
                   onClose={handleCloseAudioQualityOptions}
                 />

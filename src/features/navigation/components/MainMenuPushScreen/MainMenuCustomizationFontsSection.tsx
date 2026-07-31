@@ -15,6 +15,7 @@ import {
   type LyricsFontId,
   type LyricsFontOption,
 } from '@features/customization'
+import { usePreviewState } from '@hooks/usePreviewState'
 
 import { LyricsFontPreviewPanel } from './LyricsFontPreviewPanel'
 
@@ -70,21 +71,23 @@ function resolveInitialCategory(fontId: LyricsFontId): LyricsFontCategory {
 export function MainMenuCustomizationFontsSection() {
   const appliedLyricsFontId = useCustomizationStore((state) => state.appliedLyricsFontId)
   const setLyricsFont = useCustomizationStore((state) => state.setLyricsFont)
-  const [previewFontId, setPreviewFontId] = useState<LyricsFontId>(appliedLyricsFontId)
+  const [previewFontId, setPreviewFontId] = usePreviewState(appliedLyricsFontId)
   const [activeCategory, setActiveCategory] = useState<LyricsFontCategory>(() =>
     resolveInitialCategory(appliedLyricsFontId),
   )
+  const [previousAppliedFontId, setPreviousAppliedFontId] = useState(appliedLyricsFontId)
   const [isApplying, setIsApplying] = useState(false)
   const [applyError, setApplyError] = useState<string | null>(null)
-  const [isPreviewFontReady, setIsPreviewFontReady] = useState(false)
+  const [loadedPreviewFontId, setLoadedPreviewFontId] = useState<LyricsFontId | null>(null)
 
   const previewFont = getLyricsFontById(previewFontId)
   const visibleFonts = getLyricsFontsByCategory(activeCategory)
+  const isPreviewFontReady = previewFont !== undefined && loadedPreviewFontId === previewFont.id
 
-  useEffect(() => {
-    setPreviewFontId(appliedLyricsFontId)
+  if (previousAppliedFontId !== appliedLyricsFontId) {
+    setPreviousAppliedFontId(appliedLyricsFontId)
     setActiveCategory(resolveInitialCategory(appliedLyricsFontId))
-  }, [appliedLyricsFontId])
+  }
 
   useEffect(() => {
     void preloadLyricsFonts(getLyricsFontsByCategory(activeCategory)).catch(() => {
@@ -94,20 +97,27 @@ export function MainMenuCustomizationFontsSection() {
 
   useEffect(() => {
     if (!previewFont) {
-      setIsPreviewFontReady(false)
-      return
+      return undefined
     }
 
-    setIsPreviewFontReady(false)
+    let cancelled = false
 
     void loadLyricsFont(previewFont)
       .then(() => {
-        setIsPreviewFontReady(true)
+        if (!cancelled) {
+          setLoadedPreviewFontId(previewFont.id)
+        }
       })
       .catch(() => {
-        setIsPreviewFontReady(false)
-        setApplyError(`No se pudo cargar la fuente ${previewFont.label}.`)
+        if (!cancelled) {
+          setLoadedPreviewFontId(null)
+          setApplyError(`No se pudo cargar la fuente ${previewFont.label}.`)
+        }
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [previewFont])
 
   const handleSelectCategory = useCallback((category: LyricsFontCategory): void => {
@@ -118,7 +128,7 @@ export function MainMenuCustomizationFontsSection() {
   const handleSelectFont = useCallback((fontId: LyricsFontId): void => {
     setApplyError(null)
     setPreviewFontId(fontId)
-  }, [])
+  }, [setPreviewFontId])
 
   const handleApplyFont = useCallback(async (): Promise<void> => {
     if (previewFontId === appliedLyricsFontId) {

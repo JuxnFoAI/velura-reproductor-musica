@@ -1,5 +1,4 @@
-/** Carga dinámica de fuentes de Google Fonts para el modo letra. */
-
+/** Espera a que una fuente empaquetada localmente esté lista para renderizar. */
 import type { LyricsFontOption } from '../types/lyricsFonts'
 
 const loadedFontIds = new Set<string>()
@@ -29,7 +28,7 @@ function buildFontLoadSpec(font: LyricsFontOption): string {
 }
 
 /**
- * Espera a que la fuente esté realmente disponible para renderizar, no solo el CSS.
+ * Espera a que la fuente esté realmente disponible para renderizar.
  */
 async function waitForFontFace(font: LyricsFontOption): Promise<void> {
   if (!('fonts' in document)) {
@@ -41,38 +40,16 @@ async function waitForFontFace(font: LyricsFontOption): Promise<void> {
   try {
     await document.fonts.load(loadSpec)
     await document.fonts.ready
+    loadedFontIds.add(font.id)
   } catch {
     // Si falla la API de fuentes, el navegador usará fallback sin bloquear la UI.
   }
-}
-
-function createFontStylesheet(font: LyricsFontOption): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = `https://fonts.googleapis.com/css2?family=${font.googleFontsQuery}&display=swap`
-    link.onload = () => {
-      void waitForFontFace(font).finally(() => {
-        loadedFontIds.add(font.id)
-        resolve()
-      })
-    }
-    link.onerror = () => {
-      reject(new Error(`No se pudo cargar la fuente ${font.label}.`))
-    }
-
-    document.head.appendChild(link)
-  })
 }
 
 /**
  * Garantiza que la fuente solicitada esté disponible en el documento.
  */
 export function loadLyricsFont(font: LyricsFontOption): Promise<void> {
-  if (font.isPreloaded) {
-    return waitForFontFace(font)
-  }
-
   if (loadedFontIds.has(font.id)) {
     return Promise.resolve()
   }
@@ -83,7 +60,7 @@ export function loadLyricsFont(font: LyricsFontOption): Promise<void> {
     return pendingLoad
   }
 
-  const loadPromise = createFontStylesheet(font).finally(() => {
+  const loadPromise = waitForFontFace(font).finally(() => {
     loadingPromises.delete(font.id)
   })
 

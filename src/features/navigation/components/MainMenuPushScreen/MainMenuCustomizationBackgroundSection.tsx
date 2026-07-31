@@ -1,6 +1,6 @@
 /** Sección de fondo del reproductor con modo predeterminado o imagen personalizada. */
 
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useRef, useState, type ChangeEvent } from 'react'
 import { Check, ImagePlus } from 'lucide-react'
 
 import {
@@ -8,10 +8,10 @@ import {
   PLAYER_BACKGROUND_OPTIONS,
   arePlayerBackgroundAdjustmentsEqual,
   useCustomizationStore,
-  type PlayerBackgroundAdjustments,
   type PlayerBackgroundMode,
   type PlayerBackgroundOption,
 } from '@features/customization'
+import { usePreviewState } from '@hooks/usePreviewState'
 import { BackgroundAdjustmentsControls } from './BackgroundAdjustmentsControls'
 import { BackgroundPreviewPanel } from './BackgroundPreviewPanel'
 
@@ -97,30 +97,20 @@ export function MainMenuCustomizationBackgroundSection() {
   )
   const setPlayerBackground = useCustomizationStore((state) => state.setPlayerBackground)
 
-  const [previewMode, setPreviewMode] = useState<PlayerBackgroundMode>(appliedBackgroundMode)
-  const [previewCustomBackgroundUrl, setPreviewCustomBackgroundUrl] = useState<string | null>(
+  const [previewMode, setPreviewMode] = usePreviewState(appliedBackgroundMode)
+  const [previewCustomBackgroundUrl, setPreviewCustomBackgroundUrl] = usePreviewState(
     appliedCustomBackgroundUrl,
   )
-  const [previewAdjustments, setPreviewAdjustments] = useState<PlayerBackgroundAdjustments>(
+  const [previewAdjustments, setPreviewAdjustments] = usePreviewState(
     appliedCustomBackgroundAdjustments,
   )
   const [applyError, setApplyError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    setPreviewMode(appliedBackgroundMode)
-    setPreviewCustomBackgroundUrl(appliedCustomBackgroundUrl)
-    setPreviewAdjustments(appliedCustomBackgroundAdjustments)
-  }, [
-    appliedBackgroundMode,
-    appliedCustomBackgroundUrl,
-    appliedCustomBackgroundAdjustments,
-  ])
-
   const handleSelectMode = useCallback((mode: PlayerBackgroundMode): void => {
     setApplyError(null)
     setPreviewMode(mode)
-  }, [])
+  }, [setPreviewMode])
 
   const handleOpenFilePicker = useCallback((): void => {
     fileInputRef.current?.click()
@@ -154,7 +144,7 @@ export function MainMenuCustomizationBackgroundSection() {
       .catch(() => {
         setApplyError('No se pudo cargar la imagen seleccionada.')
       })
-  }, [])
+  }, [setPreviewAdjustments, setPreviewCustomBackgroundUrl, setPreviewMode])
 
   const handleApplyBackground = useCallback((): void => {
     if (previewMode === 'custom' && !previewCustomBackgroundUrl) {

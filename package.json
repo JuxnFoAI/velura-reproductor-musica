@@ -3,10 +3,20 @@
   "private": true,
   "version": "1.0.0",
   "description": "Velura — reproductor de música local con Web Audio, letras LRC y personalización.",
+  "author": "Velura",
   "type": "module",
+  "main": "desktop/dist/main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:renderer": "tsc -b && vite build",
+    "build:desktop": "node desktop/build.mjs",
+    "build:electron": "npm run build:renderer && npm run build:desktop",
+    "build:icon": "node build/generate-icon.mjs",
+    "electron:dev": "npm run build:desktop && electron . --dev",
+    "electron:start": "npm run build:electron && electron .",
+    "electron:pack": "npm run build:icon && npm run build:electron && electron-builder --win nsis",
+    "electron:dist": "npm run electron:pack",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -17,19 +27,89 @@
     "react-dom": "^19.2.6",
     "zustand": "^5.0.14"
   },
+  "build": {
+    "appId": "com.velura.app",
+    "productName": "Velura",
+    "copyright": "Copyright © 2026 Velura",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "mi-musica/ejemplo",
+        "to": "mi-musica-ejemplo"
+      },
+      {
+        "from": "mi-musica/cover-overrides.example.json",
+        "to": "mi-musica/cover-overrides.example.json"
+      }
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "shortcutName": "Velura"
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@fontsource/alex-brush": "^5.3.0",
+    "@fontsource/bebas-neue": "^5.3.0",
+    "@fontsource/caveat": "^5.3.0",
+    "@fontsource/dancing-script": "^5.3.0",
+    "@fontsource/dm-sans": "^5.3.0",
+    "@fontsource/great-vibes": "^5.3.0",
+    "@fontsource/handlee": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/lato": "^5.3.0",
+    "@fontsource/lora": "^5.3.0",
+    "@fontsource/marck-script": "^5.3.0",
+    "@fontsource/merriweather": "^5.3.0",
+    "@fontsource/montserrat": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
+    "@fontsource/pacifico": "^5.3.0",
+    "@fontsource/parisienne": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
+    "@fontsource/sacramento": "^5.3.0",
+    "@fontsource/satisfy": "^5.3.0",
+    "@fontsource/source-sans-3": "^5.3.0",
+    "@fontsource/work-sans": "^5.3.0",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.5.0",
+    "electron": "^35.7.5",
+    "electron-builder": "^26.0.12",
+    "esbuild": "^0.28.1",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "postcss": "^8.5.15",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.19",
+    "to-ico": "^1.1.5",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"

@@ -22,9 +22,8 @@ interface TrackInfoProps {
 
 
 
-const COVER_WIDTH_CLASS = 'w-56 md:w-72 lg:w-80'
-
-const COVER_SIZE_CLASS = `h-56 ${COVER_WIDTH_CLASS} md:h-72 lg:h-80`
+const COVER_WIDTH_CLASS = 'track-info__column w-[var(--lyrics-cover-size)]'
+const COVER_SIZE_CLASS = 'track-info__cover h-[var(--lyrics-cover-size)] w-[var(--lyrics-cover-size)]'
 
 
 
@@ -412,7 +411,7 @@ export const TrackInfo = memo(function TrackInfo({
 
 
 
-const DEFAULT_COVER_SIZE_CLASS = 'h-56 w-56 md:h-72 md:w-72 lg:h-80 lg:w-80'
+const DEFAULT_COVER_SIZE_CLASS = 'track-info__cover h-[var(--lyrics-cover-size)] w-[var(--lyrics-cover-size)]'
 
 
 

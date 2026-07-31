@@ -4,9 +4,9 @@ import { ChevronDown } from 'lucide-react'
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDynamicIslandLayout } from '../../hooks/useDynamicIslandLayout'
 import { useDynamicIslandVisibility } from '../../hooks/useDynamicIslandVisibility'
+import { useTransportControls } from '../../hooks/useTransportControls'
 import { usePlayerStore } from '../../store/playerStore'
 import { PlayPauseButton } from '../PlayerControls/PlayPauseButton'
-import { PlayingWaveBars } from '../PlayingWaveBars'
 import { DynamicIslandControls } from './DynamicIslandControls'
 
 const COLLAPSE_DELAY_MS = 180
@@ -26,6 +26,7 @@ export const DynamicIsland = memo(function DynamicIsland() {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isRetracted, setIsRetracted] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [isSizeTransitionEnabled, setIsSizeTransitionEnabled] = useState(false)
   const collapseTimeoutRef = useRef<number | null>(null)
   const activeTransitionsRef = useRef(0)
   const collapsedRef = useRef<HTMLDivElement>(null)
@@ -37,7 +38,6 @@ export const DynamicIsland = memo(function DynamicIsland() {
   const size = useDynamicIslandLayout({
     isExpanded,
     isMounted,
-    collapsedRef,
     expandedRef,
     trackId: currentTrack?.id ?? null,
   })
@@ -46,7 +46,12 @@ export const DynamicIsland = memo(function DynamicIsland() {
     setIsExpanded(false)
     setIsRetracted(false)
     setIsAnimating(false)
+    setIsSizeTransitionEnabled(false)
     activeTransitionsRef.current = 0
+  }, [])
+
+  const enableSizeTransition = useCallback((): void => {
+    setIsSizeTransitionEnabled(true)
   }, [])
 
   const updateRetractOffset = useCallback((): void => {
@@ -86,16 +91,18 @@ export const DynamicIsland = memo(function DynamicIsland() {
 
   const handleMouseEnter = useCallback((): void => {
     clearCollapseTimeout()
+    enableSizeTransition()
     setIsExpanded(true)
-  }, [clearCollapseTimeout])
+  }, [clearCollapseTimeout, enableSizeTransition])
 
   const handleMouseLeave = useCallback((): void => {
     clearCollapseTimeout()
     collapseTimeoutRef.current = window.setTimeout(() => {
+      enableSizeTransition()
       setIsExpanded(false)
       collapseTimeoutRef.current = null
     }, COLLAPSE_DELAY_MS)
-  }, [clearCollapseTimeout])
+  }, [clearCollapseTimeout, enableSizeTransition])
 
   const handleToggleClick = useCallback((): void => {
     clearCollapseTimeout()
@@ -113,6 +120,7 @@ export const DynamicIsland = memo(function DynamicIsland() {
     }
 
     if (isExpanded) {
+      enableSizeTransition()
       setIsExpanded(false)
       retractTimeoutRef.current = window.setTimeout(() => {
         startRetract()
@@ -129,6 +137,7 @@ export const DynamicIsland = memo(function DynamicIsland() {
     isRetracted,
     updateRetractOffset,
     clearRetractOffset,
+    enableSizeTransition,
   ])
 
   useLayoutEffect(() => {
@@ -215,6 +224,7 @@ export const DynamicIsland = memo(function DynamicIsland() {
 
       if (activeTransitionsRef.current === 0) {
         setIsAnimating(false)
+        setIsSizeTransitionEnabled(false)
       }
     }
 
@@ -235,6 +245,7 @@ export const DynamicIsland = memo(function DynamicIsland() {
   const islandClassName = [
     'dynamic-island',
     isExpanded ? 'dynamic-island--expanded' : '',
+    isSizeTransitionEnabled ? 'dynamic-island--size-transition' : '',
     isAnimating ? 'dynamic-island--animating' : '',
   ]
     .filter(Boolean)
@@ -264,10 +275,14 @@ export const DynamicIsland = memo(function DynamicIsland() {
           <aside
             ref={islandRef}
             className={islandClassName}
-            style={{
-              width: size.width,
-              height: size.height,
-            }}
+            style={
+              isExpanded
+                ? {
+                    width: size.width,
+                    height: size.height,
+                  }
+                : undefined
+            }
             aria-label="Reproductor flotante"
             aria-expanded={isExpanded}
             aria-hidden={isRetracted}
@@ -331,49 +346,38 @@ const DynamicIslandCollapsedContent = memo(function DynamicIslandCollapsedConten
   isPlaying,
   isDisabled,
 }: DynamicIslandCollapsedContentProps) {
-  const play = usePlayerStore((state) => state.play)
-  const pause = usePlayerStore((state) => state.pause)
-
-  const handlePlay = useCallback((): void => {
-    play()
-  }, [play])
-
-  const handlePause = useCallback((): void => {
-    pause()
-  }, [pause])
+  const { handlePlayPause } = useTransportControls()
 
   return (
     <div className="dynamic-island__collapsed-inner">
-      {coverUrl ? (
-        <img
-          src={coverUrl}
-          alt=""
-          decoding="async"
-          className="dynamic-island__cover"
-          aria-hidden="true"
-        />
-      ) : (
-        <div className="dynamic-island__cover dynamic-island__cover--placeholder" aria-hidden="true">
-          <span className="text-xs text-white">♪</span>
-        </div>
-      )}
-
-      <span className="dynamic-island__title montserrat-regular">{title}</span>
-
-      <div className="dynamic-island__play-indicator">
-        {isPlaying ? (
-          <button
-            type="button"
-            onClick={handlePause}
-            disabled={isDisabled}
-            aria-label="Pausar"
-            className="dynamic-island__wave-indicator"
-          >
-            <PlayingWaveBars className="h-5" variant="white" />
-          </button>
+      <div className="dynamic-island__slot dynamic-island__slot--leading">
+        {coverUrl ? (
+          <img
+            src={coverUrl}
+            alt=""
+            decoding="async"
+            className="dynamic-island__cover"
+            aria-hidden="true"
+          />
         ) : (
-          <PlayPauseButton isPlaying={false} disabled={isDisabled} onClick={handlePlay} />
+          <div className="dynamic-island__cover dynamic-island__cover--placeholder" aria-hidden="true">
+            <span className="text-xs text-white">♪</span>
+          </div>
         )}
+      </div>
+
+      <span className="dynamic-island__title montserrat-regular" title={title}>
+        {title}
+      </span>
+
+      <div className="dynamic-island__slot dynamic-island__slot--trailing">
+        <div className="dynamic-island__play-indicator">
+          <PlayPauseButton
+            isPlaying={isPlaying}
+            disabled={isDisabled}
+            onClick={handlePlayPause}
+          />
+        </div>
       </div>
     </div>
   )

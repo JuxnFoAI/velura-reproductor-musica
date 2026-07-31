@@ -1,6 +1,6 @@
 /** Sección de tamaño de fuentes del modo letra con vista previa antes de aplicar. */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Check } from 'lucide-react'
 
 import {
@@ -10,6 +10,7 @@ import {
   type LyricsFontSizeId,
   type LyricsFontSizeOption,
 } from '@features/customization'
+import { usePreviewState } from '@hooks/usePreviewState'
 
 import { LyricsFontSizePreviewPanel } from './LyricsFontSizePreviewPanel'
 
@@ -63,19 +64,15 @@ function LyricsFontSizeOptionButton({
 export function MainMenuCustomizationFontSizeSection() {
   const appliedLyricsFontSizeId = useCustomizationStore((state) => state.appliedLyricsFontSizeId)
   const setLyricsFontSize = useCustomizationStore((state) => state.setLyricsFontSize)
-  const [previewSizeId, setPreviewSizeId] = useState<LyricsFontSizeId>(appliedLyricsFontSizeId)
+  const [previewSizeId, setPreviewSizeId] = usePreviewState(appliedLyricsFontSizeId)
   const [applyError, setApplyError] = useState<string | null>(null)
 
   const previewSize = getLyricsFontSizeById(previewSizeId)
 
-  useEffect(() => {
-    setPreviewSizeId(appliedLyricsFontSizeId)
-  }, [appliedLyricsFontSizeId])
-
   const handleSelectSize = useCallback((sizeId: LyricsFontSizeId): void => {
     setApplyError(null)
     setPreviewSizeId(sizeId)
-  }, [])
+  }, [setPreviewSizeId])
 
   const handleApplySize = useCallback((): void => {
     if (previewSizeId === appliedLyricsFontSizeId) {

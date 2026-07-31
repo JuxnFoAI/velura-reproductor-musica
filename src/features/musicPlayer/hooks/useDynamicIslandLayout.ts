@@ -1,9 +1,9 @@
-/** Mide y observa las dimensiones de la isla dinámica para animarlas sin saltos. */
+/** Mide las dimensiones expandidas de la isla dinámica; el estado retraído usa tamaño fijo en CSS. */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 
-const COLLAPSED_WIDTH_FALLBACK_PX = 184
-const COLLAPSED_HEIGHT_FALLBACK_PX = 40
+const COLLAPSED_WIDTH_FALLBACK_PX = 200
+const COLLAPSED_HEIGHT_FALLBACK_PX = 52
 const EXPANDED_WIDTH_FALLBACK_PX = 416
 const EXPANDED_HEIGHT_FALLBACK_PX = 120
 const VIEWPORT_HORIZONTAL_MARGIN_PX = 32
@@ -34,62 +34,50 @@ interface DynamicIslandSize {
 interface UseDynamicIslandLayoutOptions {
   isExpanded: boolean
   isMounted: boolean
-  collapsedRef: RefObject<HTMLDivElement | null>
   expandedRef: RefObject<HTMLDivElement | null>
   trackId: string | null
 }
 
+const COLLAPSED_SIZE: DynamicIslandSize = {
+  width: COLLAPSED_WIDTH_FALLBACK_PX,
+  height: COLLAPSED_HEIGHT_FALLBACK_PX,
+}
+
 /**
- * Calcula el ancho y alto objetivo de la isla según la capa activa.
- * Usa ResizeObserver para reaccionar a cambios de contenido sin lag.
+ * Calcula el ancho y alto de la isla expandida.
+ * El estado retraído usa dimensiones fijas definidas en CSS para evitar animaciones al cambiar pista.
  */
 export function useDynamicIslandLayout({
   isExpanded,
   isMounted,
-  collapsedRef,
   expandedRef,
   trackId,
 }: UseDynamicIslandLayoutOptions): DynamicIslandSize {
-  const [size, setSize] = useState<DynamicIslandSize>(() =>
-    isExpanded
-      ? { width: EXPANDED_WIDTH_FALLBACK_PX, height: EXPANDED_HEIGHT_FALLBACK_PX }
-      : { width: COLLAPSED_WIDTH_FALLBACK_PX, height: COLLAPSED_HEIGHT_FALLBACK_PX },
-  )
+  const [expandedSize, setExpandedSize] = useState<DynamicIslandSize>(() => ({
+    width: EXPANDED_WIDTH_FALLBACK_PX,
+    height: EXPANDED_HEIGHT_FALLBACK_PX,
+  }))
   const measureFrameRef = useRef<number | null>(null)
 
-  const measure = useCallback((): void => {
-    const collapsed = collapsedRef.current
+  const measureExpanded = useCallback((): void => {
     const expanded = expandedRef.current
 
-    if (!collapsed || !expanded) {
+    if (!expanded) {
       return
     }
 
     const maxWidth = window.innerWidth - VIEWPORT_HORIZONTAL_MARGIN_PX
-    const collapsedSize = measureLayerSize(
-      collapsed,
-      COLLAPSED_WIDTH_FALLBACK_PX,
-      COLLAPSED_HEIGHT_FALLBACK_PX,
-    )
-    const expandedSize = measureLayerSize(
+    const measured = measureLayerSize(
       expanded,
       EXPANDED_WIDTH_FALLBACK_PX,
       EXPANDED_HEIGHT_FALLBACK_PX,
     )
 
-    if (isExpanded) {
-      setSize({
-        width: Math.min(expandedSize.width, maxWidth),
-        height: expandedSize.height,
-      })
-      return
-    }
-
-    setSize({
-      width: Math.min(collapsedSize.width, maxWidth),
-      height: collapsedSize.height,
+    setExpandedSize({
+      width: Math.min(measured.width, maxWidth),
+      height: measured.height,
     })
-  }, [collapsedRef, expandedRef, isExpanded])
+  }, [expandedRef])
 
   const scheduleMeasure = useCallback((): void => {
     if (measureFrameRef.current !== null) {
@@ -98,27 +86,26 @@ export function useDynamicIslandLayout({
 
     measureFrameRef.current = window.requestAnimationFrame(() => {
       measureFrameRef.current = null
-      measure()
+      measureExpanded()
     })
-  }, [measure])
+  }, [measureExpanded])
 
   useLayoutEffect(() => {
-    if (!isMounted) {
+    if (!isMounted || !isExpanded) {
       return
     }
 
     scheduleMeasure()
-  }, [isMounted, scheduleMeasure, trackId, isExpanded])
+  }, [isMounted, isExpanded, scheduleMeasure, trackId])
 
   useEffect(() => {
-    if (!isMounted) {
+    if (!isMounted || !isExpanded) {
       return undefined
     }
 
-    const collapsed = collapsedRef.current
     const expanded = expandedRef.current
 
-    if (!collapsed || !expanded) {
+    if (!expanded) {
       return undefined
     }
 
@@ -126,7 +113,6 @@ export function useDynamicIslandLayout({
       scheduleMeasure()
     })
 
-    observer.observe(collapsed)
     observer.observe(expanded)
 
     const handleWindowResize = (): void => {
@@ -144,7 +130,7 @@ export function useDynamicIslandLayout({
         measureFrameRef.current = null
       }
     }
-  }, [collapsedRef, expandedRef, isMounted, scheduleMeasure])
+  }, [expandedRef, isExpanded, isMounted, scheduleMeasure])
 
-  return size
+  return isExpanded ? expandedSize : COLLAPSED_SIZE
 }

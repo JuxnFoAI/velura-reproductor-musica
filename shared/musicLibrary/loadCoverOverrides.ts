@@ -1,10 +1,26 @@
 /** Carga asociaciones manuales MP3 → portada desde mi-musica/cover-overrides.json. */
 import fs from 'node:fs'
 import path from 'node:path'
+import { sanitizeCoverOverrideFilename, sanitizeCoverOverrideKey } from './safePaths'
 
 export const COVER_OVERRIDES_FILENAME = 'cover-overrides.json'
 
 const coverOverridesCache = new Map<string, Record<string, string>>()
+
+function sanitizeCoverOverrides(rawOverrides: Record<string, unknown>): Record<string, string> {
+  const sanitizedOverrides: Record<string, string> = {}
+
+  for (const [rawKey, rawValue] of Object.entries(rawOverrides)) {
+    const safeKey = sanitizeCoverOverrideKey(rawKey)
+    const safeValue = sanitizeCoverOverrideFilename(rawValue)
+
+    if (safeKey && safeValue) {
+      sanitizedOverrides[safeKey] = safeValue
+    }
+  }
+
+  return sanitizedOverrides
+}
 
 /**
  * Lee el mapa de portadas personalizadas de la biblioteca musical.
@@ -25,7 +41,7 @@ export function loadCoverOverrides(musicDirectory: string): Record<string, strin
       const parsed = JSON.parse(fs.readFileSync(overridesPath, 'utf-8')) as unknown
 
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        overrides = parsed as Record<string, string>
+        overrides = sanitizeCoverOverrides(parsed as Record<string, unknown>)
       }
     } catch {
       overrides = {}
