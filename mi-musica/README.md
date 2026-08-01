@@ -2,6 +2,15 @@
 
 Coloca aquí tus archivos MP3. El reproductor los indexará automáticamente al iniciar.
 
+## ¿Dónde van mis archivos?
+
+| Modo | Carpeta |
+|------|---------|
+| **Navegador** (`npm run dev`) | `mi-musica/` en la raíz del proyecto clonado |
+| **App de escritorio instalada** | `%APPDATA%\Velura\mi-musica\` (Windows) |
+
+En ambos casos usa la misma estructura de carpetas que aparece abajo.
+
 ## Estructura
 
 ```
