@@ -1,384 +1,135 @@
-/** Isla dinámica dentro de la ventana de la app; visible solo en escritorio empaquetado. */
+/** Isla dinámica flotante; en escritorio se renderiza en una ventana always-on-top. */
 
-import { ChevronDown } from 'lucide-react'
-import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { memo, useRef } from 'react'
+import { useDynamicIslandInteraction } from '../../hooks/useDynamicIslandInteraction'
 import { useDynamicIslandLayout } from '../../hooks/useDynamicIslandLayout'
 import { useDynamicIslandVisibility } from '../../hooks/useDynamicIslandVisibility'
-import { useTransportControls } from '../../hooks/useTransportControls'
 import { usePlayerStore } from '../../store/playerStore'
-import { PlayPauseButton } from '../PlayerControls/PlayPauseButton'
+import type { PlayerStatus, Track } from '../../types'
+import { DynamicIslandCollapsedContent } from './DynamicIslandCollapsedContent'
 import { DynamicIslandControls } from './DynamicIslandControls'
 
-const COLLAPSE_DELAY_MS = 180
-const RETRACT_TRANSITION_MS = 450
-const ISLAND_TOGGLE_GAP_PX = 10
-const MIN_ISLAND_HEIGHT_PX = 40
+function toClassName(...parts: Array<string | false>): string {
+  return parts.filter(Boolean).join(' ')
+}
 
-/**
- * Widget flotante en la parte superior que se expande al pasar el cursor.
- * La flecha inferior oculta o muestra la isla con un desplazamiento vertical.
- */
-export const DynamicIsland = memo(function DynamicIsland() {
-  const isVisible = useDynamicIslandVisibility()
-  const currentTrack = usePlayerStore((state) => state.currentTrack)
-  const status = usePlayerStore((state) => state.status)
-  const isMounted = isVisible && currentTrack !== null
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [isRetracted, setIsRetracted] = useState(false)
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [isSizeTransitionEnabled, setIsSizeTransitionEnabled] = useState(false)
-  const collapseTimeoutRef = useRef<number | null>(null)
-  const activeTransitionsRef = useRef(0)
-  const collapsedRef = useRef<HTMLDivElement>(null)
+interface DynamicIslandSurfaceProps {
+  track: Track
+  status: PlayerStatus
+}
+
+const DynamicIslandSurface = memo(function DynamicIslandSurface({
+  track,
+  status,
+}: DynamicIslandSurfaceProps) {
   const expandedRef = useRef<HTMLDivElement>(null)
-  const islandRef = useRef<HTMLElement>(null)
-  const stackRef = useRef<HTMLDivElement>(null)
-  const retractTimeoutRef = useRef<number | null>(null)
-
-  const size = useDynamicIslandLayout({
-    isExpanded,
-    isMounted,
-    expandedRef,
-    trackId: currentTrack?.id ?? null,
-  })
-
-  const resetInteractionState = useCallback((): void => {
-    setIsExpanded(false)
-    setIsRetracted(false)
-    setIsAnimating(false)
-    setIsSizeTransitionEnabled(false)
-    activeTransitionsRef.current = 0
-  }, [])
-
-  const enableSizeTransition = useCallback((): void => {
-    setIsSizeTransitionEnabled(true)
-  }, [])
-
-  const updateRetractOffset = useCallback((): void => {
-    const island = islandRef.current
-    const stack = stackRef.current
-
-    if (!island || !stack) {
-      return
-    }
-
-    const measuredHeight = Math.max(
-      island.offsetHeight,
-      island.getBoundingClientRect().height,
-      MIN_ISLAND_HEIGHT_PX,
-    )
-    const offset = measuredHeight + ISLAND_TOGGLE_GAP_PX
-    stack.style.setProperty('--dynamic-island-retract-offset', `${offset}px`)
-  }, [])
-
-  const clearRetractOffset = useCallback((): void => {
-    stackRef.current?.style.removeProperty('--dynamic-island-retract-offset')
-  }, [])
-
-  const clearRetractTimeout = useCallback((): void => {
-    if (retractTimeoutRef.current !== null) {
-      window.clearTimeout(retractTimeoutRef.current)
-      retractTimeoutRef.current = null
-    }
-  }, [])
-
-  const clearCollapseTimeout = useCallback((): void => {
-    if (collapseTimeoutRef.current !== null) {
-      window.clearTimeout(collapseTimeoutRef.current)
-      collapseTimeoutRef.current = null
-    }
-  }, [])
-
-  const handleMouseEnter = useCallback((): void => {
-    clearCollapseTimeout()
-    enableSizeTransition()
-    setIsExpanded(true)
-  }, [clearCollapseTimeout, enableSizeTransition])
-
-  const handleMouseLeave = useCallback((): void => {
-    clearCollapseTimeout()
-    collapseTimeoutRef.current = window.setTimeout(() => {
-      enableSizeTransition()
-      setIsExpanded(false)
-      collapseTimeoutRef.current = null
-    }, COLLAPSE_DELAY_MS)
-  }, [clearCollapseTimeout, enableSizeTransition])
-
-  const handleToggleClick = useCallback((): void => {
-    clearCollapseTimeout()
-    clearRetractTimeout()
-
-    if (isRetracted) {
-      clearRetractOffset()
-      setIsRetracted(false)
-      return
-    }
-
-    const startRetract = (): void => {
-      updateRetractOffset()
-      setIsRetracted(true)
-    }
-
-    if (isExpanded) {
-      enableSizeTransition()
-      setIsExpanded(false)
-      retractTimeoutRef.current = window.setTimeout(() => {
-        startRetract()
-        retractTimeoutRef.current = null
-      }, RETRACT_TRANSITION_MS)
-      return
-    }
-
-    startRetract()
-  }, [
-    clearCollapseTimeout,
-    clearRetractTimeout,
+  const {
     isExpanded,
     isRetracted,
-    updateRetractOffset,
-    clearRetractOffset,
-    enableSizeTransition,
-  ])
-
-  useLayoutEffect(() => {
-    if (!isMounted) {
-      clearCollapseTimeout()
-      clearRetractTimeout()
-      resetInteractionState()
-      return
-    }
-
-    resetInteractionState()
-    clearRetractOffset()
-  }, [
-    isMounted,
-    clearCollapseTimeout,
-    clearRetractTimeout,
-    clearRetractOffset,
-    resetInteractionState,
-  ])
-
-  useLayoutEffect(() => {
-    if (!isMounted || !isRetracted) {
-      return
-    }
-
-    updateRetractOffset()
-  }, [isMounted, isRetracted, size.height, size.width, updateRetractOffset])
-
-  useEffect(() => {
-    const island = islandRef.current
-
-    if (!island || !isMounted) {
-      return undefined
-    }
-
-    const observer = new ResizeObserver(() => {
-      updateRetractOffset()
-    })
-
-    observer.observe(island)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [isMounted, updateRetractOffset])
-
-  useEffect(() => {
-    return () => {
-      clearCollapseTimeout()
-      clearRetractTimeout()
-    }
-  }, [clearCollapseTimeout, clearRetractTimeout])
-
-  useEffect(() => {
-    const island = islandRef.current
-
-    if (!island || !isMounted) {
-      return
-    }
-
-    const handleTransitionStart = (event: TransitionEvent): void => {
-      if (event.target !== island) {
-        return
-      }
-
-      if (event.propertyName !== 'width' && event.propertyName !== 'height') {
-        return
-      }
-
-      activeTransitionsRef.current += 1
-      setIsAnimating(true)
-    }
-
-    const handleTransitionEnd = (event: TransitionEvent): void => {
-      if (event.target !== island) {
-        return
-      }
-
-      if (event.propertyName !== 'width' && event.propertyName !== 'height') {
-        return
-      }
-
-      activeTransitionsRef.current = Math.max(0, activeTransitionsRef.current - 1)
-
-      if (activeTransitionsRef.current === 0) {
-        setIsAnimating(false)
-        setIsSizeTransitionEnabled(false)
-      }
-    }
-
-    island.addEventListener('transitionstart', handleTransitionStart)
-    island.addEventListener('transitionend', handleTransitionEnd)
-
-    return () => {
-      island.removeEventListener('transitionstart', handleTransitionStart)
-      island.removeEventListener('transitionend', handleTransitionEnd)
-    }
-  }, [isMounted])
-
-  if (!isMounted) {
-    return null
-  }
-
-  const isPlaying = status === 'playing'
-  const islandClassName = [
-    'dynamic-island',
-    isExpanded ? 'dynamic-island--expanded' : '',
-    isSizeTransitionEnabled ? 'dynamic-island--size-transition' : '',
-    isAnimating ? 'dynamic-island--animating' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  const stackClassName = [
-    'dynamic-island-stack',
-    isRetracted ? 'dynamic-island-stack--retracted' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  const anchorClassName = [
-    'dynamic-island-anchor',
-    isRetracted ? 'dynamic-island-anchor--retracted' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+    isSizeTransitionEnabled,
+    islandRef,
+    stackRef,
+    deployIsland,
+    scheduleRetractIsland,
+    handleIslandMouseEnter,
+    handleIslandMouseLeave,
+  } = useDynamicIslandInteraction()
+  const size = useDynamicIslandLayout({
+    isExpanded,
+    expandedRef,
+    trackId: track.id,
+  })
 
   return (
-    <div className={anchorClassName}>
-      <div ref={stackRef} className={stackClassName}>
-        <div
-          onMouseEnter={isRetracted ? undefined : handleMouseEnter}
-          onMouseLeave={isRetracted ? undefined : handleMouseLeave}
+    <div
+      className={toClassName(
+        'dynamic-island-anchor',
+        isRetracted && 'dynamic-island-anchor--retracted',
+      )}
+    >
+      <div
+        ref={stackRef}
+        className={toClassName(
+          'dynamic-island-stack',
+          isRetracted && 'dynamic-island-stack--retracted',
+        )}
+        onMouseEnter={deployIsland}
+        onMouseLeave={scheduleRetractIsland}
+      >
+        <aside
+          ref={islandRef}
+          className={toClassName(
+            'dynamic-island',
+            isExpanded && 'dynamic-island--expanded',
+            isSizeTransitionEnabled && 'dynamic-island--size-transition',
+          )}
+          onMouseEnter={isRetracted ? undefined : handleIslandMouseEnter}
+          onMouseLeave={isRetracted ? undefined : handleIslandMouseLeave}
+          style={isExpanded ? { width: size.width, height: size.height } : undefined}
+          aria-label="Reproductor flotante"
+          aria-expanded={isExpanded}
+          aria-hidden={isRetracted}
+          {...(isRetracted ? { inert: true } : {})}
         >
-          <aside
-            ref={islandRef}
-            className={islandClassName}
-            style={
-              isExpanded
-                ? {
-                    width: size.width,
-                    height: size.height,
-                  }
-                : undefined
-            }
-            aria-label="Reproductor flotante"
-            aria-expanded={isExpanded}
-            aria-hidden={isRetracted}
-            {...(isRetracted ? { inert: true } : {})}
-          >
-            <div className="dynamic-island__layers">
-              <div
-                ref={collapsedRef}
-                className={`dynamic-island__layer dynamic-island__layer--collapsed ${
-                  isExpanded ? 'dynamic-island__layer--hidden' : 'dynamic-island__layer--visible'
-                }`}
-                aria-hidden={isExpanded}
-                {...(isExpanded ? { inert: true } : {})}
-              >
-                <DynamicIslandCollapsedContent
-                  coverUrl={currentTrack.coverUrl}
-                  title={currentTrack.title}
-                  isPlaying={isPlaying}
-                  isDisabled={status === 'loading'}
-                />
-              </div>
-
-              <div
-                ref={expandedRef}
-                className={`dynamic-island__layer dynamic-island__layer--expanded ${
-                  isExpanded ? 'dynamic-island__layer--visible' : 'dynamic-island__layer--hidden'
-                }`}
-                aria-hidden={!isExpanded}
-                {...(!isExpanded ? { inert: true } : {})}
-              >
-                <DynamicIslandControls />
-              </div>
+          <div className="dynamic-island__layers">
+            <div
+              className={toClassName(
+                'dynamic-island__layer',
+                'dynamic-island__layer--collapsed',
+                isExpanded ? 'dynamic-island__layer--hidden' : 'dynamic-island__layer--visible',
+              )}
+              aria-hidden={isExpanded}
+              {...(isExpanded ? { inert: true } : {})}
+            >
+              <DynamicIslandCollapsedContent
+                coverUrl={track.coverUrl}
+                title={track.title}
+                isPlaying={status === 'playing'}
+                isDisabled={status === 'loading'}
+              />
             </div>
-          </aside>
-        </div>
+
+            <div
+              ref={expandedRef}
+              className={toClassName(
+                'dynamic-island__layer',
+                'dynamic-island__layer--expanded',
+                isExpanded ? 'dynamic-island__layer--visible' : 'dynamic-island__layer--hidden',
+              )}
+              aria-hidden={!isExpanded}
+              {...(!isExpanded ? { inert: true } : {})}
+            >
+              <DynamicIslandControls />
+            </div>
+          </div>
+        </aside>
 
         <button
           type="button"
-          onClick={handleToggleClick}
+          onFocus={deployIsland}
           aria-expanded={!isRetracted}
-          aria-label={isRetracted ? 'Mostrar reproductor flotante' : 'Ocultar reproductor flotante'}
-          className={`dynamic-island__toggle ${isRetracted ? 'dynamic-island__toggle--retracted' : ''}`}
+          aria-label="Mostrar reproductor flotante"
+          className="dynamic-island__handle"
         >
-          <ChevronDown size={16} aria-hidden="true" className="dynamic-island__toggle-icon" />
+          <span className="dynamic-island__handle-bar" aria-hidden="true" />
         </button>
       </div>
     </div>
   )
 })
 
-interface DynamicIslandCollapsedContentProps {
-  coverUrl?: string
-  title: string
-  isPlaying: boolean
-  isDisabled: boolean
-}
+/**
+ * Widget flotante en la parte superior.
+ * En reposo solo se ve el indicador; al pasar el cursor por la línea, la isla se despliega.
+ */
+export const DynamicIsland = memo(function DynamicIsland() {
+  const isVisible = useDynamicIslandVisibility()
+  const currentTrack = usePlayerStore((state) => state.currentTrack)
+  const status = usePlayerStore((state) => state.status)
 
-const DynamicIslandCollapsedContent = memo(function DynamicIslandCollapsedContent({
-  coverUrl,
-  title,
-  isPlaying,
-  isDisabled,
-}: DynamicIslandCollapsedContentProps) {
-  const { handlePlayPause } = useTransportControls()
+  if (!isVisible || currentTrack === null) {
+    return null
+  }
 
-  return (
-    <div className="dynamic-island__collapsed-inner">
-      <div className="dynamic-island__slot dynamic-island__slot--leading">
-        {coverUrl ? (
-          <img
-            src={coverUrl}
-            alt=""
-            decoding="async"
-            className="dynamic-island__cover"
-            aria-hidden="true"
-          />
-        ) : (
-          <div className="dynamic-island__cover dynamic-island__cover--placeholder" aria-hidden="true">
-            <span className="text-xs text-white">♪</span>
-          </div>
-        )}
-      </div>
-
-      <span className="dynamic-island__title montserrat-regular" title={title}>
-        {title}
-      </span>
-
-      <div className="dynamic-island__slot dynamic-island__slot--trailing">
-        <div className="dynamic-island__play-indicator">
-          <PlayPauseButton
-            isPlaying={isPlaying}
-            disabled={isDisabled}
-            onClick={handlePlayPause}
-          />
-        </div>
-      </div>
-    </div>
-  )
+  return <DynamicIslandSurface track={currentTrack} status={status} />
 })

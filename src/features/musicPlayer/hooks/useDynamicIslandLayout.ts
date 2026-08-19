@@ -8,21 +8,38 @@ const EXPANDED_WIDTH_FALLBACK_PX = 416
 const EXPANDED_HEIGHT_FALLBACK_PX = 120
 const VIEWPORT_HORIZONTAL_MARGIN_PX = 32
 
-function measureLayerSize(
+function restoreMeasuredStyles(
+  element: HTMLElement,
+  previous: { width: string; maxWidth: string; minWidth: string },
+): void {
+  element.style.width = previous.width
+  element.style.maxWidth = previous.maxWidth
+  element.style.minWidth = previous.minWidth
+}
+
+function measureUnconstrainedLayerSize(
   element: HTMLElement,
   widthFallback: number,
   heightFallback: number,
 ): { width: number; height: number } {
-  const measuredWidth = Math.max(element.scrollWidth, element.getBoundingClientRect().width)
-  const measuredHeight = Math.max(
-    element.offsetHeight,
-    element.scrollHeight,
-    element.getBoundingClientRect().height,
-  )
+  const previous = {
+    width: element.style.width,
+    maxWidth: element.style.maxWidth,
+    minWidth: element.style.minWidth,
+  }
+
+  element.style.width = 'max-content'
+  element.style.maxWidth = 'none'
+  element.style.minWidth = '0'
+
+  const measuredWidth = Math.max(element.scrollWidth, element.offsetWidth, widthFallback)
+  const measuredHeight = Math.max(element.scrollHeight, element.offsetHeight, heightFallback)
+
+  restoreMeasuredStyles(element, previous)
 
   return {
-    width: measuredWidth > 0 ? measuredWidth : widthFallback,
-    height: measuredHeight > 0 ? measuredHeight : heightFallback,
+    width: measuredWidth,
+    height: measuredHeight,
   }
 }
 
@@ -33,9 +50,8 @@ interface DynamicIslandSize {
 
 interface UseDynamicIslandLayoutOptions {
   isExpanded: boolean
-  isMounted: boolean
   expandedRef: RefObject<HTMLDivElement | null>
-  trackId: string | null
+  trackId: string
 }
 
 const COLLAPSED_SIZE: DynamicIslandSize = {
@@ -44,12 +60,11 @@ const COLLAPSED_SIZE: DynamicIslandSize = {
 }
 
 /**
- * Calcula el ancho y alto de la isla expandida.
- * El estado retraído usa dimensiones fijas definidas en CSS para evitar animaciones al cambiar pista.
+ * Calcula el ancho y alto de la isla expandida antes de animar.
+ * El estado retraído usa dimensiones fijas definidas en CSS.
  */
 export function useDynamicIslandLayout({
   isExpanded,
-  isMounted,
   expandedRef,
   trackId,
 }: UseDynamicIslandLayoutOptions): DynamicIslandSize {
@@ -67,7 +82,7 @@ export function useDynamicIslandLayout({
     }
 
     const maxWidth = window.innerWidth - VIEWPORT_HORIZONTAL_MARGIN_PX
-    const measured = measureLayerSize(
+    const measured = measureUnconstrainedLayerSize(
       expanded,
       EXPANDED_WIDTH_FALLBACK_PX,
       EXPANDED_HEIGHT_FALLBACK_PX,
@@ -91,38 +106,21 @@ export function useDynamicIslandLayout({
   }, [measureExpanded])
 
   useLayoutEffect(() => {
-    if (!isMounted || !isExpanded) {
-      return
-    }
-
-    scheduleMeasure()
-  }, [isMounted, isExpanded, scheduleMeasure, trackId])
+    measureExpanded()
+  }, [measureExpanded, trackId])
 
   useEffect(() => {
-    if (!isMounted || !isExpanded) {
-      return undefined
-    }
-
-    const expanded = expandedRef.current
-
-    if (!expanded) {
-      return undefined
-    }
-
-    const observer = new ResizeObserver(() => {
-      scheduleMeasure()
-    })
-
-    observer.observe(expanded)
-
     const handleWindowResize = (): void => {
+      if (isExpanded) {
+        return
+      }
+
       scheduleMeasure()
     }
 
     window.addEventListener('resize', handleWindowResize)
 
     return () => {
-      observer.disconnect()
       window.removeEventListener('resize', handleWindowResize)
 
       if (measureFrameRef.current !== null) {
@@ -130,7 +128,7 @@ export function useDynamicIslandLayout({
         measureFrameRef.current = null
       }
     }
-  }, [expandedRef, isExpanded, isMounted, scheduleMeasure])
+  }, [isExpanded, scheduleMeasure])
 
   return isExpanded ? expandedSize : COLLAPSED_SIZE
 }

@@ -1,12 +1,5 @@
 /** Detección del entorno de ejecución (navegador vs app de escritorio). */
 
-declare global {
-  interface Window {
-    /** Marcador inyectado por el preload de la app de escritorio (Electron/Tauri). */
-    __REPRODUCTOR_DESKTOP__?: boolean
-  }
-}
-
 /**
  * Indica si la UI corre dentro de la app de escritorio empaquetada.
  * El preload debe asignar `window.__REPRODUCTOR_DESKTOP__ = true`.
@@ -16,17 +9,9 @@ export function isDesktopApp(): boolean {
 }
 
 /**
- * La Isla dinámica solo se habilita en viewport de escritorio y dentro de la app empaquetada.
- * En desarrollo web se mantiene visible para poder probar la UI en el navegador.
+ * En el navegador, la isla de vista previa solo aparece en viewport de escritorio y en desarrollo.
+ * En la app empaquetada la isla vive en su propia ventana.
  */
 export function isDynamicIslandRuntimeEnabled(isDesktopViewport: boolean): boolean {
-  if (!isDesktopViewport) {
-    return false
-  }
-
-  if (isDesktopApp()) {
-    return true
-  }
-
-  return import.meta.env.DEV
+  return isDesktopViewport && import.meta.env.DEV
 }

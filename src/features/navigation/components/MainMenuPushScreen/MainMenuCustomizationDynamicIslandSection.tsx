@@ -134,7 +134,7 @@ export function MainMenuCustomizationDynamicIslandSection() {
               </span>
               <span className="main-menu-customization-dynamic-island-section__toggle-description montserrat-regular">
                 {isDynamicIslandEnabled
-                  ? 'Visible en la parte superior'
+                  ? 'Visible en la parte superior del escritorio'
                   : 'Desactivada'}
               </span>
             </span>

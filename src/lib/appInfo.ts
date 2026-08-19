@@ -4,7 +4,7 @@ import { isDesktopApp } from './runtimeEnvironment'
 
 export const APP_NAME = 'Velura'
 
-export const APP_VERSION = '1.0.1'
+export const APP_VERSION = '1.1.0'
 
 export const APP_DESCRIPTION =
   'Reproductor de música local diseñado para escuchar tu biblioteca con control total, letras sincronizadas y listas personalizadas.'

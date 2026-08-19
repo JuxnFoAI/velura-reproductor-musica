@@ -7,7 +7,7 @@ import { usePlayerStore } from '../store/playerStore'
 
 const REPEAT_CYCLE: RepeatMode[] = ['none', 'all', 'one']
 
-export const REPEAT_LABELS: Record<RepeatMode, string> = {
+const REPEAT_LABELS: Record<RepeatMode, string> = {
   none: 'Repetición desactivada',
   all: 'Repetir cola',
   one: 'Repetir pista actual',

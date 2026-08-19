@@ -1,7 +1,5 @@
 /** Punto de entrada público del módulo de calidad de audio. */
 export { useAudioQualityBootstrap } from './hooks/useAudioQualityBootstrap'
-export { useEqualizerBootstrap } from './hooks/useEqualizerBootstrap'
-export { useVolumeNormalizationBootstrap } from './hooks/useVolumeNormalizationBootstrap'
 export { useEqualizerStore, useVolumeNormalizationStore } from './store'
 export {
   DEFAULT_EQUALIZER_PRESET_ID,
@@ -11,8 +9,6 @@ export {
   EQ_GAIN_MIN_DB,
   EQ_GAIN_STEP_DB,
   formatEqualizerGainDb,
-  getEqualizerPresetById,
-  type EqualizerBandGains,
   type EqualizerBandId,
   type EqualizerPresetId,
   type EqualizerPresetOption,
@@ -21,7 +17,6 @@ export {
   DEFAULT_VOLUME_NORMALIZATION_MODE_ID,
   VOLUME_NORMALIZATION_MODE_OPTIONS,
   formatAppliedNormalizationGainDb,
-  getVolumeNormalizationModeById,
   type VolumeNormalizationModeId,
   type VolumeNormalizationModeOption,
 } from './types/volumeNormalization'

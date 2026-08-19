@@ -23,6 +23,7 @@
       "@features/*": ["./src/features/*"],
       "@hooks/*": ["./src/hooks/*"],
       "@lib/*": ["./src/lib/*"],
+      "@shared/*": ["./shared/*"],
       "@types": ["./src/types/index.ts"],
       "@types/*": ["./src/types/*"]
     },
@@ -34,5 +35,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src", "shared/desktop/**/*.ts"]
 }

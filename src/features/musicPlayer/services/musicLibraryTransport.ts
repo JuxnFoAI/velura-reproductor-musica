@@ -8,7 +8,7 @@ const LIBRARY_AUDIO_ENDPOINT = '/api/music/audio'
 const LIBRARY_COVER_ENDPOINT = '/api/music/cover'
 const LIBRARY_LYRICS_ENDPOINT = '/api/music/lyrics'
 
-export interface MusicLibraryTrackDto {
+interface MusicLibraryTrackDto {
   id: string
   filename: string
   title: string
@@ -21,22 +21,22 @@ export interface MusicLibraryTrackDto {
   replayGainTrackDb: number | null
 }
 
-export interface MusicLibraryResponseDto {
+interface MusicLibraryResponseDto {
   musicDirectory: string | null
   tracks: MusicLibraryTrackDto[]
 }
 
-export interface SaveTrackCoverPayload {
+interface SaveTrackCoverPayload {
   trackRelativePath: string
   coverRelativePath: string | null
   imageDataUrl: string
 }
 
-export interface SaveTrackCoverResponse {
+interface SaveTrackCoverResponse {
   coverRelativePath: string
 }
 
-export interface SaveTrackLyricsPayload {
+interface SaveTrackLyricsPayload {
   trackRelativePath: string
   lyricsContent: string
   lyricsExtension: '.txt' | '.lrc'
@@ -44,18 +44,18 @@ export interface SaveTrackLyricsPayload {
   sourceLyricsFilename?: string | null
 }
 
-export interface SaveTrackLyricsResponse {
+interface SaveTrackLyricsResponse {
   lyricsRelativePath: string
 }
 
-export interface RenameTrackPayload {
+interface RenameTrackPayload {
   trackRelativePath: string
   title: string
   artist: string
   coverRelativePath: string | null
 }
 
-export interface RenameTrackResponse {
+interface RenameTrackResponse {
   id: string
   relativePath: string
   filename: string
@@ -65,13 +65,13 @@ export interface RenameTrackResponse {
   lyricsRelativePath: string | null
 }
 
-export interface DeleteTrackPayload {
+interface DeleteTrackPayload {
   trackRelativePath: string
   coverRelativePath: string | null
   lyricsRelativePath: string | null
 }
 
-export interface MusicLibraryTransport {
+interface MusicLibraryTransport {
   getTracks(): Promise<MusicLibraryResponseDto>
   saveTrackCover(payload: SaveTrackCoverPayload): Promise<SaveTrackCoverResponse>
   saveTrackLyrics(payload: SaveTrackLyricsPayload): Promise<SaveTrackLyricsResponse>

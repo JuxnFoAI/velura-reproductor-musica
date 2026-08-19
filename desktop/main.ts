@@ -3,6 +3,11 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow } from 'electron'
 import { registerMusicLibraryIpc } from './ipc/registerMusicLibraryIpc'
+import {
+  attachDesktopIslandWindows,
+  destroyDesktopIslandWindow,
+  registerDesktopIslandIpc,
+} from './ipc/registerDesktopIslandIpc'
 import { attachMainWindow, registerWindowIpc } from './ipc/registerWindowIpc'
 import {
   registerMediaProtocolHandler,
@@ -14,6 +19,10 @@ import {
   registerNavigationGuards,
   resolveSafeDevServerUrl,
 } from './security/registerNavigationGuards'
+
+if (process.platform === 'win32') {
+  app.commandLine.appendSwitch('enable-transparent-visuals')
+}
 
 const projectRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -68,6 +77,7 @@ function createMainWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      backgroundThrottling: false,
     },
   })
 
@@ -78,6 +88,7 @@ function createMainWindow(): BrowserWindow {
   attachNavigationGuards(mainWindow)
   loadRenderer(mainWindow)
   attachMainWindow(mainWindow)
+  attachDesktopIslandWindows(mainWindow)
   return mainWindow
 }
 
@@ -85,6 +96,7 @@ app.whenReady().then(() => {
   initializeElectronMusicDirectory()
   registerMusicLibraryIpc()
   registerWindowIpc()
+  registerDesktopIslandIpc()
   registerMediaProtocolHandler()
   createMainWindow()
 
@@ -99,4 +111,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+app.on('before-quit', () => {
+  destroyDesktopIslandWindow()
 })

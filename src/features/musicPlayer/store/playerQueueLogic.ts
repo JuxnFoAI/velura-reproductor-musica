@@ -17,10 +17,57 @@ export function resetTrackHistory(): void {
   trackHistory.length = 0
 }
 
-export function popLastTrackHistory(): void {
-  if (trackHistory.length >= 2) {
+function findTrackInQueue(queue: Track[], trackId: string): Track | null {
+  return queue.find((track) => track.id === trackId) ?? null
+}
+
+/** Recorre el historial real de reproducción, ignorando ids que ya no están en cola. */
+function findPreviousTrackInHistory(state: PlayerState): Track | null {
+  const { queue, currentTrack } = state
+
+  if (!currentTrack || trackHistory.length === 0) {
+    return null
+  }
+
+  const lastIndex = trackHistory.length - 1
+  const startIndex =
+    trackHistory[lastIndex] === currentTrack.id ? lastIndex - 1 : lastIndex
+
+  for (let index = startIndex; index >= 0; index -= 1) {
+    const candidate = findTrackInQueue(queue, trackHistory[index])
+
+    if (candidate !== null && candidate.id !== currentTrack.id) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
+function rewindHistoryToTrack(trackId: string): void {
+  while (trackHistory.length > 0 && trackHistory.at(-1) !== trackId) {
     trackHistory.pop()
   }
+}
+
+function getSequentialPreviousTrack(state: PlayerState): Track | null {
+  const { queue, currentTrack, repeatMode, isShuffle } = state
+
+  if (!currentTrack || isShuffle) {
+    return null
+  }
+
+  const currentIndex = queue.findIndex((track) => track.id === currentTrack.id)
+
+  if (currentIndex > 0) {
+    return queue[currentIndex - 1]
+  }
+
+  if (repeatMode === 'all') {
+    return queue[queue.length - 1]
+  }
+
+  return null
 }
 
 /** Indica si el motor tiene cargada exactamente la pista visible en la UI. */
@@ -28,7 +75,7 @@ export function isEngineSyncedWithTrack(track: Track): boolean {
   return audioEngine.hasLoadedBuffer() && audioEngine.getLoadedTrack()?.id === track.id
 }
 
-export function resolvePlaybackAnchorTrack(state: PlayerState): Track | null {
+function resolvePlaybackAnchorTrack(state: PlayerState): Track | null {
   return state.currentTrack ?? audioEngine.getLoadedTrack()
 }
 
@@ -66,7 +113,7 @@ export function syncActiveQueueWithLibrary(
   return syncedQueue.length > 0 ? syncedQueue : libraryTracks
 }
 
-export interface GetNextTrackOptions {
+interface GetNextTrackOptions {
   /** Al estar en la última pista, devuelve la primera de la cola. */
   wrapQueue?: boolean
 }
@@ -118,29 +165,27 @@ export function getNextTrack(
   return null
 }
 
-export function getPreviousTrack(state: PlayerState): Track | null {
-  const { queue, currentTrack, repeatMode } = state
-
-  if (!currentTrack || queue.length === 0) {
+function getPreviousTrack(state: PlayerState): Track | null {
+  if (!state.currentTrack || state.queue.length === 0) {
     return null
   }
 
-  if (trackHistory.length >= 2) {
-    const previousTrackId = trackHistory[trackHistory.length - 2]
-    return queue.find((track) => track.id === previousTrackId) ?? null
+  return findPreviousTrackInHistory(state) ?? getSequentialPreviousTrack(state)
+}
+
+/**
+ * Elige la pista anterior y deja el historial apuntando a ella.
+ * Así varios clics rápidos retroceden en orden, sin mezclar la cola.
+ */
+export function consumePreviousTrack(state: PlayerState): Track | null {
+  const previousTrack = getPreviousTrack(state)
+
+  if (!previousTrack) {
+    return null
   }
 
-  const currentIndex = queue.findIndex((track) => track.id === currentTrack.id)
-
-  if (currentIndex > 0) {
-    return queue[currentIndex - 1]
-  }
-
-  if (repeatMode === 'all') {
-    return queue[queue.length - 1]
-  }
-
-  return null
+  rewindHistoryToTrack(previousTrack.id)
+  return previousTrack
 }
 
 export function getNextTrackAfterFailure(

@@ -1,7 +1,7 @@
 {
   "name": "reproductor-of-music",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Velura — reproductor de música local con Web Audio, letras LRC y personalización.",
   "author": "Velura",
   "type": "module",
