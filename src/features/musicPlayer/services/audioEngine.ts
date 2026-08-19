@@ -99,6 +99,8 @@ class AudioEngine {
         return false
       }
 
+      // Un play concurrente pudo reanudar el buffer anterior durante el fetch.
+      this.stopPlayback({ resetPosition: true })
       this.audioBuffer = decodedBuffer
       this.currentTrack = track
       this.trackReplayGainDb = track.replayGainTrackDb ?? null
