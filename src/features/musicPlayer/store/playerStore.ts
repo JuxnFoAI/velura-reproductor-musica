@@ -37,6 +37,7 @@ import {
   getNextTrack,
   getNextTrackAfterFailure,
   getPreviousTrack,
+  isEngineSyncedWithTrack,
   popLastTrackHistory,
   pushTrackHistory,
   resetTrackHistory,
@@ -55,6 +56,7 @@ const SESSION_PERSIST_INTERVAL_MS = 5000
 let isRepeatingCurrentTrack = false
 let lastSessionPersistAt = 0
 let playbackRequestId = 0
+let shouldAutoPlayAfterTrackChange = false
 
 function beginPlaybackRequest(): number {
   playbackRequestId += 1
@@ -63,6 +65,24 @@ function beginPlaybackRequest(): number {
 
 function isStalePlaybackRequest(requestId: number): boolean {
   return requestId !== playbackRequestId
+}
+
+/**
+ * Conserva la intención de reproducir o pausar al saltar de pista.
+ * Si la cola estaba sonando, el salto sigue en play; si estaba en pausa, permanece en pausa.
+ */
+function resolveAutoPlayAfterTrackChange(state: PlayerState): boolean {
+  if (state.status === 'playing' || audioEngine.isPlayingActive()) {
+    shouldAutoPlayAfterTrackChange = true
+    return true
+  }
+
+  if (state.status === 'paused' || state.status === 'idle') {
+    shouldAutoPlayAfterTrackChange = false
+    return false
+  }
+
+  return shouldAutoPlayAfterTrackChange
 }
 
 interface PlayerActions {
@@ -635,9 +655,10 @@ async function loadAndPlayTrack(
   track: Track,
   set: StoreApi<PlayerStore>['setState'],
   get: StoreApi<PlayerStore>['getState'],
-  options: { skipFadeOut?: boolean; requestId?: number } = {},
+  options: { skipFadeOut?: boolean; requestId?: number; autoPlay?: boolean } = {},
 ): Promise<void> {
   const requestId = options.requestId ?? beginPlaybackRequest()
+  const shouldAutoPlay = options.autoPlay !== false
   const previousStatus = get().status
   const shouldFadeOut =
     !options.skipFadeOut &&
@@ -671,27 +692,99 @@ async function loadAndPlayTrack(
       throw new Error('El archivo de audio no pudo decodificarse')
     }
 
-    syncAudioSettings(get())
-
-    if (isStalePlaybackRequest(requestId)) {
-      return
-    }
-
-    await audioEngine.playWithFadeIn(TRACK_FADE_MS)
-
-    if (isStalePlaybackRequest(requestId)) {
-      audioEngine.stop()
-      return
-    }
-
-    pushTrackHistory(track.id)
-    set((state) => ({ ...state, status: 'playing', isAudioBlocked: false }))
-    persistCurrentSession(get)
+    await commitLoadedTrack(track, requestId, shouldAutoPlay, set, get)
   } catch (error) {
     if (isStalePlaybackRequest(requestId)) {
       return
     }
 
+    await handlePlaybackFailure(error, track, set, get)
+  }
+}
+
+/** Aplica la pista ya decodificada: la reproduce o la deja en pausa según el salto. */
+async function commitLoadedTrack(
+  track: Track,
+  requestId: number,
+  shouldAutoPlay: boolean,
+  set: StoreApi<PlayerStore>['setState'],
+  get: StoreApi<PlayerStore>['getState'],
+): Promise<void> {
+  syncAudioSettings(get())
+
+  if (isStalePlaybackRequest(requestId)) {
+    return
+  }
+
+  pushTrackHistory(track.id)
+
+  if (!shouldAutoPlay) {
+    set((state) => ({ ...state, status: 'paused', isAudioBlocked: false }))
+    persistCurrentSession(get)
+    return
+  }
+
+  await audioEngine.playWithFadeIn(TRACK_FADE_MS)
+
+  if (isStalePlaybackRequest(requestId)) {
+    audioEngine.stop()
+    return
+  }
+
+  set((state) => ({ ...state, status: 'playing', isAudioBlocked: false }))
+  persistCurrentSession(get)
+}
+
+/**
+ * Reanuda la pista visible. Si el motor aún tiene otra, la recarga antes de dar play.
+ */
+async function resumeOrReloadCurrentTrack(
+  track: Track,
+  set: StoreApi<PlayerStore>['setState'],
+  get: StoreApi<PlayerStore>['getState'],
+): Promise<void> {
+  const state = get()
+  const isSyncedAndPlaying =
+    state.status === 'playing' &&
+    audioEngine.isPlayingActive() &&
+    isEngineSyncedWithTrack(track)
+
+  if (isSyncedAndPlaying) {
+    return
+  }
+
+  if (state.status === 'loading' || !isEngineSyncedWithTrack(track)) {
+    await loadAndPlayTrack(track, set, get, { requestId: beginPlaybackRequest() })
+    return
+  }
+
+  await resumeSyncedTrack(track, state, set, get)
+}
+
+/** Reanuda una pista que ya coincide con el buffer del motor. */
+async function resumeSyncedTrack(
+  track: Track,
+  state: PlayerState,
+  set: StoreApi<PlayerStore>['setState'],
+  get: StoreApi<PlayerStore>['getState'],
+): Promise<void> {
+  try {
+    syncAudioSettings(get())
+
+    if (state.status === 'playing' && !audioEngine.isPlayingActive()) {
+      if (state.repeatMode === 'one' && hasReachedTrackEnd(state.currentTime, state.duration)) {
+        await repeatCurrentTrack(set, get)
+        return
+      }
+
+      await audioEngine.play()
+    } else {
+      await audioEngine.playWithFadeIn(TRACK_FADE_MS)
+    }
+
+    set((currentState) => ({ ...currentState, status: 'playing', isAudioBlocked: false }))
+    persistCurrentSession(get)
+  } catch (error) {
     await handlePlaybackFailure(error, track, set, get)
   }
 }
@@ -849,37 +942,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
         return
       }
 
-      if (state.status === 'playing' && audioEngine.isPlayingActive()) {
-        return
-      }
-
-      try {
-        syncAudioSettings(get())
-
-        if (state.status === 'playing' && !audioEngine.isPlayingActive()) {
-          if (state.repeatMode === 'one' && hasReachedTrackEnd(state.currentTime, state.duration)) {
-            await repeatCurrentTrack(set, get)
-            return
-          }
-
-          await audioEngine.play()
-          set((currentState) => ({
-            ...currentState,
-            status: 'playing',
-            isAudioBlocked: false,
-          }))
-          persistCurrentSession(get)
-          return
-        }
-
-        await audioEngine.playWithFadeIn(TRACK_FADE_MS)
-        set((currentState) => ({ ...currentState, status: 'playing', isAudioBlocked: false }))
-        persistCurrentSession(get)
-      } catch (error) {
-        if (state.currentTrack) {
-          await handlePlaybackFailure(error, state.currentTrack, set, get)
-        }
-      }
+      await resumeOrReloadCurrentTrack(state.currentTrack, set, get)
     })()
   },
 
@@ -944,7 +1007,10 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
         return
       }
 
-      await loadAndPlayTrack(nextTrack, set, get, { requestId })
+      await loadAndPlayTrack(nextTrack, set, get, {
+        requestId,
+        autoPlay: resolveAutoPlayAfterTrackChange(state),
+      })
     })()
   },
 
@@ -974,7 +1040,10 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 
       popLastTrackHistory()
 
-      await loadAndPlayTrack(previousTrack, set, get, { requestId })
+      await loadAndPlayTrack(previousTrack, set, get, {
+        requestId,
+        autoPlay: resolveAutoPlayAfterTrackChange(state),
+      })
     })()
   },
 

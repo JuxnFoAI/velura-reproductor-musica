@@ -23,22 +23,13 @@ export function popLastTrackHistory(): void {
   }
 }
 
+/** Indica si el motor tiene cargada exactamente la pista visible en la UI. */
+export function isEngineSyncedWithTrack(track: Track): boolean {
+  return audioEngine.hasLoadedBuffer() && audioEngine.getLoadedTrack()?.id === track.id
+}
+
 export function resolvePlaybackAnchorTrack(state: PlayerState): Track | null {
-  if (!state.currentTrack) {
-    return audioEngine.getLoadedTrack()
-  }
-
-  const loadedTrack = audioEngine.getLoadedTrack()
-
-  if (
-    state.status === 'loading' &&
-    loadedTrack !== null &&
-    loadedTrack.id !== state.currentTrack.id
-  ) {
-    return loadedTrack
-  }
-
-  return state.currentTrack
+  return state.currentTrack ?? audioEngine.getLoadedTrack()
 }
 
 export function getNavigationState(state: PlayerState): PlayerState {
