@@ -60,8 +60,11 @@
     --dynamic-island-play-size: 2.25rem;
     --dynamic-island-control-size: 2rem;
     --dynamic-island-collapsed-play-size: 1.375rem;
-    --dynamic-island-toggle-size: 1.75rem;
-    --dynamic-island-toggle-gap: 0.625rem;
+    --dynamic-island-handle-width: 2.5rem;
+    --dynamic-island-handle-bar-height: 0.3125rem;
+    --dynamic-island-handle-hit-height: 1.25rem;
+    --dynamic-island-handle-gap: 0.5rem;
+    --dynamic-island-handle-color: #ffffff;
     --dynamic-island-background: #000000;
     --main-menu-nav-border-color: rgb(255 255 255 / 0.1);
     --main-menu-nav-bg-hover: rgb(255 255 255 / 0.05);
@@ -3825,7 +3828,36 @@
     );
   }
 
-  /* Fija la isla al viewport de la ventana de la app (no overlay del sistema). */
+  /* Overlay de escritorio: la isla vive en su propia ventana transparente. */
+  html.desktop-island-window,
+  html.desktop-island-window body,
+  html.desktop-island-window #root {
+    color-scheme: dark;
+    background: transparent !important;
+    background-image: none !important;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    -webkit-app-region: no-drag;
+  }
+
+  html.desktop-island-window .desktop-island-root {
+    width: 100%;
+    height: 100%;
+  }
+
+  html.desktop-island-window .dynamic-island-anchor {
+    position: relative;
+    top: 0.5rem;
+    left: 50%;
+    z-index: 80;
+    display: block;
+    overflow: visible;
+    transform: translateX(-50%);
+    pointer-events: auto;
+  }
+
+  /* Vista previa web: la isla se fija al viewport. En escritorio usa una ventana overlay. */
   .dynamic-island-anchor {
     position: fixed;
     top: 0.75rem;
@@ -3844,7 +3876,7 @@
   }
 
   .dynamic-island-anchor--retracted {
-    height: var(--dynamic-island-toggle-size);
+    height: var(--dynamic-island-handle-hit-height);
     overflow: hidden;
   }
 
@@ -3885,6 +3917,7 @@
   }
 
   .dynamic-island--size-transition {
+    will-change: width, height;
     transition:
       width var(--dynamic-island-transition),
       height var(--dynamic-island-transition),
@@ -3897,49 +3930,37 @@
     height: var(--dynamic-island-height-collapsed);
   }
 
-  .dynamic-island--animating {
-    will-change: width, height;
-  }
-
   .dynamic-island--expanded {
     border-radius: 1.75rem;
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
   }
 
-  .dynamic-island__toggle {
+  .dynamic-island__handle {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: var(--dynamic-island-toggle-size);
-    height: var(--dynamic-island-toggle-size);
-    margin-top: var(--dynamic-island-toggle-gap);
+    width: 4.5rem;
+    height: var(--dynamic-island-handle-hit-height);
+    margin-top: var(--dynamic-island-handle-gap);
     flex-shrink: 0;
     padding: 0;
     border: none;
-    border-radius: 9999px;
-    background-color: transparent;
-    color: #ffffff;
+    background: transparent;
     cursor: pointer;
-    box-shadow: none;
-    transition:
-      opacity 150ms ease,
-      box-shadow var(--dynamic-island-transition);
   }
 
-  .dynamic-island-anchor--retracted .dynamic-island__toggle {
-    box-shadow: 0 4px 24px rgb(0 0 0 / 0.55);
+  .dynamic-island__handle-bar {
+    width: var(--dynamic-island-handle-width);
+    height: var(--dynamic-island-handle-bar-height);
+    border-radius: 9999px;
+    background-color: var(--dynamic-island-handle-color);
+    mix-blend-mode: difference;
+    transition: transform 150ms ease;
   }
 
-  .dynamic-island__toggle:hover {
-    opacity: 0.85;
-  }
-
-  .dynamic-island__toggle-icon {
-    transition: transform var(--dynamic-island-transition);
-  }
-
-  .dynamic-island__toggle--retracted .dynamic-island__toggle-icon {
-    transform: rotate(180deg);
+  .dynamic-island__handle:hover .dynamic-island__handle-bar,
+  .dynamic-island__handle:focus-visible .dynamic-island__handle-bar {
+    transform: scaleX(1.1);
   }
 
   .dynamic-island__layers {
@@ -4083,7 +4104,7 @@
     .dynamic-island--size-transition,
     .dynamic-island__layer,
     .dynamic-island-stack,
-    .dynamic-island__toggle-icon {
+    .dynamic-island__handle-bar {
       transition: none !important;
     }
   }

@@ -33,12 +33,11 @@ import {
 import { toastStore } from './toastStore'
 import { resolveVisibleLibraryTracks } from '../lib/resolveVisibleLibraryTracks'
 import {
+  consumePreviousTrack,
   getNavigationState,
   getNextTrack,
   getNextTrackAfterFailure,
-  getPreviousTrack,
   isEngineSyncedWithTrack,
-  popLastTrackHistory,
   pushTrackHistory,
   resetTrackHistory,
   resolveFavoriteTracks,
@@ -485,6 +484,21 @@ async function handlePlaybackFailure(
   clearPersistedSession()
 }
 
+/** Reinicia la pista actual al inicio, ignorando el seek si ya hubo otro salto. */
+async function restartCurrentTrackFromStart(
+  requestId: number,
+  set: StoreApi<PlayerStore>['setState'],
+): Promise<void> {
+  set((currentState) => ({ ...currentState, currentTime: 0 }))
+  await audioEngine.seek(0)
+
+  if (isStalePlaybackRequest(requestId)) {
+    return
+  }
+
+  set((currentState) => ({ ...currentState, currentTime: 0 }))
+}
+
 async function repeatCurrentTrack(
   set: StoreApi<PlayerStore>['setState'],
   get: StoreApi<PlayerStore>['getState'],
@@ -562,6 +576,7 @@ async function loadAndRestoreTrack(
     currentTime: 0,
     isLyricsVisible,
   }))
+  pushTrackHistory(track.id)
 
   try {
     const loaded = await audioEngine.loadTrack(track)
@@ -597,8 +612,6 @@ async function loadAndRestoreTrack(
     if (isStalePlaybackRequest(requestId)) {
       return
     }
-
-    pushTrackHistory(restoredTrack.id)
 
     set((state) => ({
       ...state,
@@ -672,6 +685,7 @@ async function loadAndPlayTrack(
     duration: track.duration,
     currentTime: 0,
   }))
+  pushTrackHistory(track.id)
 
   try {
     if (shouldFadeOut) {
@@ -692,7 +706,7 @@ async function loadAndPlayTrack(
       throw new Error('El archivo de audio no pudo decodificarse')
     }
 
-    await commitLoadedTrack(track, requestId, shouldAutoPlay, set, get)
+    await commitLoadedTrack(requestId, shouldAutoPlay, set, get)
   } catch (error) {
     if (isStalePlaybackRequest(requestId)) {
       return
@@ -704,7 +718,6 @@ async function loadAndPlayTrack(
 
 /** Aplica la pista ya decodificada: la reproduce o la deja en pausa según el salto. */
 async function commitLoadedTrack(
-  track: Track,
   requestId: number,
   shouldAutoPlay: boolean,
   set: StoreApi<PlayerStore>['setState'],
@@ -715,8 +728,6 @@ async function commitLoadedTrack(
   if (isStalePlaybackRequest(requestId)) {
     return
   }
-
-  pushTrackHistory(track.id)
 
   if (!shouldAutoPlay) {
     set((state) => ({ ...state, status: 'paused', isAudioBlocked: false }))
@@ -1024,21 +1035,16 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
       }
 
       if (state.currentTime > RESTART_THRESHOLD_SECONDS) {
-        await audioEngine.seek(0)
-        set((currentState) => ({ ...currentState, currentTime: 0 }))
+        await restartCurrentTrackFromStart(requestId, set)
         return
       }
 
-      const navigationState = getNavigationState(state)
-      const previousTrack = getPreviousTrack(navigationState)
+      const previousTrack = consumePreviousTrack(getNavigationState(state))
 
       if (!previousTrack) {
-        await audioEngine.seek(0)
-        set((currentState) => ({ ...currentState, currentTime: 0 }))
+        await restartCurrentTrackFromStart(requestId, set)
         return
       }
-
-      popLastTrackHistory()
 
       await loadAndPlayTrack(previousTrack, set, get, {
         requestId,

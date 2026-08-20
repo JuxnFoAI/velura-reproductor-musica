@@ -36,6 +36,7 @@ export default defineConfig(({ command, mode }) => {
         '@features': path.resolve(projectRoot, 'src/features'),
         '@hooks': path.resolve(projectRoot, 'src/hooks'),
         '@lib': path.resolve(projectRoot, 'src/lib'),
+        '@shared': path.resolve(projectRoot, 'shared'),
         '@types': path.resolve(projectRoot, 'src/types'),
       },
     },

@@ -1,5 +1,10 @@
 /** Tipos globales inyectados por el preload de Electron. */
 import type {
+  DesktopIslandCommand,
+  DesktopIslandStateSnapshot,
+  DesktopIslandWindowShapeRect,
+} from '@shared/desktop'
+import type {
   DeleteTrackRequest,
   DeleteTrackResponse,
   MusicLibraryResponse,
@@ -28,6 +33,16 @@ export interface VeluraDesktopWindowBridge {
   onFullscreenChange(listener: (isFullscreen: boolean) => void): () => void
 }
 
+export interface VeluraDesktopIslandBridge {
+  publishState(snapshot: DesktopIslandStateSnapshot): void
+  requestState(): void
+  sendCommand(command: DesktopIslandCommand): Promise<void>
+  setIgnoreMouseEvents(ignore: boolean): Promise<void>
+  setWindowShape(rects: DesktopIslandWindowShapeRect[]): void
+  onState(listener: (snapshot: DesktopIslandStateSnapshot) => void): () => void
+  onCommand(listener: (command: DesktopIslandCommand) => void): () => void
+}
+
 declare global {
   interface Window {
     /** Marcador inyectado por el preload de la app de escritorio. */
@@ -36,6 +51,8 @@ declare global {
     veluraMusicLibrary?: VeluraMusicLibraryBridge
     /** API IPC de ventana; solo disponible en Electron. */
     veluraDesktopWindow?: VeluraDesktopWindowBridge
+    /** API IPC de la isla dinámica flotante; solo disponible en Electron. */
+    veluraDesktopIsland?: VeluraDesktopIslandBridge
   }
 }
 
