@@ -5,7 +5,7 @@ import { FolderX, PencilLine, Trash2 } from 'lucide-react'
 
 import { NavigationMenuDotsIcon } from '@components/NavigationMenuDotsIcon'
 import { useDismissibleMenu } from '@lib/useDismissibleMenu'
-import type { Playlist } from '@features/musicPlayer/types/playlist'
+import type { Playlist } from '@features/musicPlayer'
 
 const MENU_ICON_SIZE_PX = 16
 

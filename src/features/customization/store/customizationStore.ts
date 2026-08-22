@@ -2,7 +2,6 @@
 
 import { create } from 'zustand'
 
-import { applyDynamicIslandColor } from '../lib/applyDynamicIslandColor'
 import { applyLyricsFontFamily } from '../lib/applyLyricsFontFamily'
 import { applyLyricsFontSize } from '../lib/applyLyricsFontSize'
 import { applyPlayerButtonColor } from '../lib/applyPlayerButtonColor'
@@ -22,10 +21,6 @@ import {
   savePersistedPlayerButtonColorId,
   savePersistedPlayerLetterColorId,
 } from '../services/playerColorPersistence'
-import {
-  loadPersistedDynamicIslandSettings,
-  savePersistedDynamicIslandSettings,
-} from '../services/dynamicIslandPersistence'
 import {
   loadPersistedPlayerBackground,
   savePersistedPlayerBackground,
@@ -49,11 +44,6 @@ import {
   type PlayerLetterColorId,
 } from '../types/playerColors'
 import {
-  DEFAULT_DYNAMIC_ISLAND_COLOR_ID,
-  getDynamicIslandColorById,
-  type DynamicIslandColorId,
-} from '../types/dynamicIslandColors'
-import {
   DEFAULT_PLAYER_BACKGROUND_MODE,
   type PlayerBackgroundMode,
 } from '../types/playerBackground'
@@ -71,8 +61,6 @@ interface CustomizationState {
   appliedBackgroundMode: PlayerBackgroundMode
   customBackgroundUrl: string | null
   customBackgroundAdjustments: PlayerBackgroundAdjustments
-  isDynamicIslandEnabled: boolean
-  appliedDynamicIslandColorId: DynamicIslandColorId
   isLyricsFontReady: boolean
   initializeLyricsFont: () => Promise<void>
   setLyricsFont: (fontId: LyricsFontId) => Promise<void>
@@ -85,8 +73,6 @@ interface CustomizationState {
     customBackgroundUrl?: string | null,
     adjustments?: PlayerBackgroundAdjustments,
   ) => void
-  setDynamicIslandEnabled: (isEnabled: boolean) => void
-  setDynamicIslandColor: (colorId: DynamicIslandColorId) => void
 }
 
 async function resolveLyricsFont(fontId: LyricsFontId) {
@@ -143,20 +129,6 @@ function resolvePlayerButtonColor(colorId: PlayerButtonColorId): PlayerButtonCol
   return color.id
 }
 
-function resolveDynamicIslandColor(colorId: DynamicIslandColorId): DynamicIslandColorId {
-  const color =
-    getDynamicIslandColorById(colorId) ??
-    getDynamicIslandColorById(DEFAULT_DYNAMIC_ISLAND_COLOR_ID)
-
-  if (!color) {
-    throw new Error('No se encontró el color predeterminado de la Isla dinámica.')
-  }
-
-  applyDynamicIslandColor(color)
-
-  return color.id
-}
-
 export const useCustomizationStore = create<CustomizationState>((set) => ({
   appliedLyricsFontId: DEFAULT_LYRICS_FONT_ID,
   appliedLyricsFontSizeId: DEFAULT_LYRICS_FONT_SIZE_ID,
@@ -165,8 +137,6 @@ export const useCustomizationStore = create<CustomizationState>((set) => ({
   appliedBackgroundMode: DEFAULT_PLAYER_BACKGROUND_MODE,
   customBackgroundUrl: null,
   customBackgroundAdjustments: { ...DEFAULT_PLAYER_BACKGROUND_ADJUSTMENTS },
-  isDynamicIslandEnabled: true,
-  appliedDynamicIslandColorId: DEFAULT_DYNAMIC_ISLAND_COLOR_ID,
   isLyricsFontReady: false,
 
   initializeLyricsFont: async () => {
@@ -175,14 +145,10 @@ export const useCustomizationStore = create<CustomizationState>((set) => ({
     const persistedLetterColorId = loadPersistedPlayerLetterColorId()
     const persistedButtonColorId = loadPersistedPlayerButtonColorId()
     const persistedBackground = loadPersistedPlayerBackground()
-    const persistedDynamicIsland = loadPersistedDynamicIslandSettings()
     const resolvedFontId = await resolveLyricsFont(persistedFontId)
     const resolvedFontSizeId = resolveLyricsFontSize(persistedFontSizeId)
     const resolvedLetterColorId = resolvePlayerLetterColor(persistedLetterColorId)
     const resolvedButtonColorId = resolvePlayerButtonColor(persistedButtonColorId)
-    const resolvedDynamicIslandColorId = resolveDynamicIslandColor(
-      persistedDynamicIsland.colorId,
-    )
 
     set({
       appliedLyricsFontId: resolvedFontId,
@@ -192,8 +158,6 @@ export const useCustomizationStore = create<CustomizationState>((set) => ({
       appliedBackgroundMode: persistedBackground.mode,
       customBackgroundUrl: persistedBackground.customBackgroundDataUrl,
       customBackgroundAdjustments: persistedBackground.adjustments,
-      isDynamicIslandEnabled: persistedDynamicIsland.isEnabled,
-      appliedDynamicIslandColorId: resolvedDynamicIslandColorId,
       isLyricsFontReady: true,
     })
   },
@@ -252,30 +216,6 @@ export const useCustomizationStore = create<CustomizationState>((set) => ({
         customBackgroundUrl: resolvedCustomBackgroundUrl,
         customBackgroundAdjustments: resolvedAdjustments,
       }
-    })
-  },
-
-  setDynamicIslandEnabled: (isEnabled) => {
-    set((state) => {
-      savePersistedDynamicIslandSettings({
-        isEnabled,
-        colorId: state.appliedDynamicIslandColorId,
-      })
-
-      return { isDynamicIslandEnabled: isEnabled }
-    })
-  },
-
-  setDynamicIslandColor: (colorId) => {
-    const resolvedColorId = resolveDynamicIslandColor(colorId)
-
-    set((state) => {
-      savePersistedDynamicIslandSettings({
-        isEnabled: state.isDynamicIslandEnabled,
-        colorId: resolvedColorId,
-      })
-
-      return { appliedDynamicIslandColorId: resolvedColorId }
     })
   },
 }))

@@ -40,7 +40,7 @@ Abre en el navegador la URL que muestra Vite (normalmente `http://localhost:5173
 
 5. **En el navegador:** si no suena, haz clic en **Activar audio** (los navegadores bloquean el sonido hasta que interactúas).
 
-6. **Controles básicos:** menú (☰) → biblioteca, listas, ecualizador y personalización. En escritorio empaquetado también verás la **isla dinámica** flotante.
+6. **Controles básicos:** menú (☰) → biblioteca, listas, ecualizador y personalización.
 
 > **¿Solo quieres la app sin tocar código?** Ejecuta `npm run electron:pack`, instala `release/Velura Setup x.x.x.exe` y usa Velura como cualquier programa de Windows. Tu música va en `%APPDATA%\Velura\mi-musica\`.
 
@@ -51,8 +51,7 @@ Abre en el navegador la URL que muestra Vite (normalmente `http://localhost:5173
 - Letras sincronizadas (`.lrc`) y letras en texto plano (`.txt`)
 - Portadas editables con recorte y persistencia en disco
 - Listas de reproducción, favoritos y pistas ocultas
-- **Isla dinámica** en escritorio (widget flotante con controles rápidos)
-- Personalización: fondo, colores, fuentes, tamaño de letra e isla dinámica
+- Personalización: fondo, colores, fuentes y tamaño de letra
 - Persistencia de sesión y preferencias en `localStorage`
 
 ## Instalación
@@ -143,7 +142,7 @@ Genera `release/Velura Setup x.x.x.exe`. Al instalar:
 
 - La app va a Program Files (o la ruta que elija el usuario).
 - En el primer arranque crea `%APPDATA%\Velura\mi-musica\` y copia la pista demo.
-- Reproduce, edita portadas/letras y muestra la isla dinámica sin Vite ni la carpeta del proyecto.
+- Reproduce y edita portadas/letras sin Vite ni la carpeta del proyecto.
 
 Windows puede mostrar un aviso de **SmartScreen** porque el instalador no está firmado digitalmente. Es normal en apps independientes: elige *Más información* → *Ejecutar de todas formas*.
 
@@ -160,12 +159,13 @@ Detalle técnico en [desktop/README.md](./desktop/README.md).
 | `npm run electron:start` | Electron con renderer compilado |
 | `npm run electron:pack` | Instalador NSIS `.exe` en `release/` |
 | `npm run lint` | ESLint sobre todo el proyecto |
+| `npm test` | Vitest: parseo de nombres, cola y parser LRC |
 
 ## Estructura del proyecto
 
 ```
 mi-musica/                         # Biblioteca MP3 local (gitignored)
-shared/musicLibrary/               # Lógica Node compartida (Vite + Electron)
+shared/musicLibrary/               # API pública + node.ts (disco, Vite, Electron)
 desktop/                           # Electron: main, preload, IPC, protocolo velura-media
 vite-plugins/
   musicLibraryPlugin.ts            # Capa HTTP sobre shared/musicLibrary
@@ -174,8 +174,8 @@ src/
   components/                      # UI compartida (diálogos, botones, intro)
   features/
     audioQuality/                  # Ecualizador y normalización de volumen
-    customization/                 # Fuentes, colores, fondo, isla dinámica
-    musicPlayer/                   # Motor, biblioteca, controles, isla dinámica
+    customization/                 # Fuentes, colores y fondo
+    musicPlayer/                   # Motor, biblioteca y controles
     navigation/                    # Menús push, pantallas de edición
   hooks/                           # Hooks globales (bootstrap de la app)
   lib/                             # Utilidades compartidas
@@ -223,6 +223,7 @@ Antes de un commit, verifica que no se suba biblioteca personal:
 ```bash
 git add -n .
 npm run lint
+npm test
 npm run build
 ```
 

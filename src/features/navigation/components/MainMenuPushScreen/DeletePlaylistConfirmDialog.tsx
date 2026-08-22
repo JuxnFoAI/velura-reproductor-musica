@@ -1,7 +1,7 @@
 /** Diálogo de confirmación para eliminar una carpeta de reproducción. */
 import { memo } from 'react'
 import { ConfirmDialog } from '@components/ConfirmDialog'
-import type { Playlist } from '@features/musicPlayer/types/playlist'
+import type { Playlist } from '@features/musicPlayer'
 
 interface DeletePlaylistConfirmDialogProps {
   isOpen: boolean

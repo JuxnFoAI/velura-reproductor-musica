@@ -10,7 +10,7 @@ import {
   resolveSafeLyricsPath,
   VELURA_MEDIA_SCHEME,
   type MusicLibraryMediaKind,
-} from '../../shared/musicLibrary'
+} from '../../shared/musicLibrary/node'
 import { getElectronMusicDirectory } from '../musicDirectory'
 
 function parseMediaKind(hostname: string): MusicLibraryMediaKind | null {

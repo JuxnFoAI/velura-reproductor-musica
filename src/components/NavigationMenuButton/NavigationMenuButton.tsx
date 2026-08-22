@@ -2,7 +2,7 @@
 
 import { NavigationMenuDotsIcon } from '@components/NavigationMenuDotsIcon'
 import { useNavigationStore } from '@features/navigation'
-import { usePlayerStore } from '@features/musicPlayer/store'
+import { usePlayerStore } from '@features/musicPlayer'
 
 
 interface NavigationMenuButtonProps {

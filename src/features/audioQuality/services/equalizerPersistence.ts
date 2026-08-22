@@ -1,5 +1,6 @@
 /** Persistencia en localStorage de la configuración del ecualizador. */
 
+import { createPersistedJsonStorage, isJsonObject } from '@lib/createPersistedJsonStorage'
 import { normalizeEqualizerBandGains, type EqualizerBandGains } from '@lib/equalizerConstants'
 
 import {
@@ -16,50 +17,31 @@ interface PersistedEqualizerSettings {
   bandGains: EqualizerBandGains
 }
 
-/**
- * Carga la configuración del ecualizador desde localStorage.
- */
-export function loadPersistedEqualizerSettings(): PersistedEqualizerSettings {
-  try {
-    const raw = localStorage.getItem(EQUALIZER_STORAGE_KEY)
-
-    if (!raw) {
-      return createDefaultEqualizerSettings()
-    }
-
-    const parsed: unknown = JSON.parse(raw)
-
-    if (typeof parsed !== 'object' || parsed === null) {
-      return createDefaultEqualizerSettings()
-    }
-
-    const data = parsed as Partial<PersistedEqualizerSettings>
-
-    return {
-      isEnabled: data.isEnabled === true,
-      presetId: isEqualizerPresetId(data.presetId) ? data.presetId : DEFAULT_EQUALIZER_PRESET_ID,
-      bandGains: normalizeEqualizerBandGains(data.bandGains),
-    }
-  } catch {
-    return createDefaultEqualizerSettings()
-  }
+const DEFAULT_EQUALIZER_SETTINGS: PersistedEqualizerSettings = {
+  isEnabled: false,
+  presetId: DEFAULT_EQUALIZER_PRESET_ID,
+  bandGains: normalizeEqualizerBandGains(null),
 }
 
-/**
- * Guarda la configuración del ecualizador en localStorage.
- */
-export function savePersistedEqualizerSettings(settings: PersistedEqualizerSettings): void {
-  try {
-    localStorage.setItem(EQUALIZER_STORAGE_KEY, JSON.stringify(settings))
-  } catch {
-    // Ignorar errores de cuota o modo privado.
+function validateEqualizerSettings(value: unknown): PersistedEqualizerSettings | null {
+  if (!isJsonObject(value)) {
+    return null
   }
-}
 
-function createDefaultEqualizerSettings(): PersistedEqualizerSettings {
   return {
-    isEnabled: false,
-    presetId: DEFAULT_EQUALIZER_PRESET_ID,
-    bandGains: normalizeEqualizerBandGains(null),
+    isEnabled: value.isEnabled === true,
+    presetId: isEqualizerPresetId(value.presetId) ? value.presetId : DEFAULT_EQUALIZER_PRESET_ID,
+    bandGains: normalizeEqualizerBandGains(
+      isJsonObject(value.bandGains) ? (value.bandGains as Partial<EqualizerBandGains>) : null,
+    ),
   }
 }
+
+const equalizerStorage = createPersistedJsonStorage(
+  EQUALIZER_STORAGE_KEY,
+  DEFAULT_EQUALIZER_SETTINGS,
+  validateEqualizerSettings,
+)
+
+export const loadPersistedEqualizerSettings = equalizerStorage.load
+export const savePersistedEqualizerSettings = equalizerStorage.save

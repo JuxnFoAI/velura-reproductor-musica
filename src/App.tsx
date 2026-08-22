@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { IntroOverlay } from '@components/IntroOverlay'
 import { MainMenuButton } from '@components/MainMenuButton'
 import { NavigationMenuButton } from '@components/NavigationMenuButton'
-import { DynamicIsland, MusicPlayer, TrackArtBackground } from '@features/musicPlayer'
+import { MusicPlayer, TrackArtBackground } from '@features/musicPlayer'
 import {
   CoverAdjustPushScreen,
   LyricsEditPushScreen,
@@ -24,7 +24,6 @@ function App() {
         aria-hidden={showIntro}
       >
         <TrackArtBackground />
-        <DynamicIsland />
         <MainMenuButton />
         <NavigationMenuButton />
         <MainMenuPushScreen />

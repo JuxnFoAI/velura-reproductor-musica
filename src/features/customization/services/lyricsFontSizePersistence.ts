@@ -1,9 +1,10 @@
 /** Persistencia del tamaño tipográfico seleccionado para el modo letra. */
+import { createPersistedIdStorage } from '@lib/createPersistedIdStorage'
+
 import {
   DEFAULT_LYRICS_FONT_SIZE_ID,
   isLyricsFontSizeId,
 } from '../types/lyricsFontSizes'
-import { createPersistedIdStorage } from './createPersistedIdStorage'
 
 const lyricsFontSizeStorage = createPersistedIdStorage({
   storageKey: 'music-player-lyrics-font-size',

@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 
-import { audioEngine } from '@features/musicPlayer/services/audioEngine'
+import { audioEngine } from '@features/musicPlayer'
 
 import {
   loadPersistedVolumeNormalizationSettings,

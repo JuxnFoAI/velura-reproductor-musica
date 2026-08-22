@@ -101,7 +101,6 @@ La biblioteca del usuario **no** se incluye. En el primer arranque se crea `%APP
 | Reproducción | Audio vía `velura-media://` |
 | Portadas | Carga y guardado |
 | Letras | `.lrc` / `.txt` |
-| Isla dinámica | Visible y usable en escritorio |
 | Privacidad | Nada personal del repo en el instalador |
 
 ## Compilación del proceso main
@@ -110,7 +109,7 @@ La biblioteca del usuario **no** se incluye. En el primer arranque se crea `%APP
 npm run build:desktop
 ```
 
-Salida en `desktop/dist/main.js` y `desktop/dist/preload.js`. Entry point: `package.json` → `"main": "desktop/dist/main.js"`.
+Salida en `desktop/dist/main.js` (ESM) y `desktop/dist/preload.js` (CJS, el sandbox del renderer no carga ESM). Entry point: `package.json` → `"main": "desktop/dist/main.js"`.
 
 ## Referencias
 

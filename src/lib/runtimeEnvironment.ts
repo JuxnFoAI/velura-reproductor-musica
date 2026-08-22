@@ -7,11 +7,3 @@
 export function isDesktopApp(): boolean {
   return window.__REPRODUCTOR_DESKTOP__ === true
 }
-
-/**
- * En el navegador, la isla de vista previa solo aparece en viewport de escritorio y en desarrollo.
- * En la app empaquetada la isla vive en su propia ventana.
- */
-export function isDynamicIslandRuntimeEnabled(isDesktopViewport: boolean): boolean {
-  return isDesktopViewport && import.meta.env.DEV
-}

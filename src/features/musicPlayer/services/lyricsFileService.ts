@@ -1,10 +1,8 @@
 /** Utilidades para validar y leer archivos de letra (.txt / .lrc). */
 
-const LYRICS_EXTENSIONS = ['.txt', '.lrc'] as const
+import { LYRICS_EXTENSIONS, type LyricsExtension } from '@shared/musicLibrary'
 
-export type LyricsFileExtension = (typeof LYRICS_EXTENSIONS)[number]
-
-export const LYRICS_FILE_ACCEPT = '.txt,.lrc'
+export const LYRICS_FILE_ACCEPT = LYRICS_EXTENSIONS.join(',')
 export const LYRICS_FORMAT_HINT = 'Te recomendamos que sean archivos .txt o .lrc'
 
 /**
@@ -19,18 +17,10 @@ export function isValidLyricsFile(file: File): boolean {
 /**
  * Obtiene la extensión admitida del archivo de letra.
  */
-export function resolveLyricsExtension(filename: string): LyricsFileExtension | null {
+export function resolveLyricsExtension(filename: string): LyricsExtension | null {
   const normalizedName = filename.trim().toLowerCase()
 
-  if (normalizedName.endsWith('.lrc')) {
-    return '.lrc'
-  }
-
-  if (normalizedName.endsWith('.txt')) {
-    return '.txt'
-  }
-
-  return null
+  return LYRICS_EXTENSIONS.find((extension) => normalizedName.endsWith(extension)) ?? null
 }
 
 /**
@@ -72,6 +62,6 @@ export function getLyricsFilename(relativePath: string): string {
  */
 export function resolveLyricsExtensionFromRelativePath(
   relativePath: string,
-): LyricsFileExtension | null {
+): LyricsExtension | null {
   return resolveLyricsExtension(getLyricsFilename(relativePath))
 }

@@ -6,11 +6,7 @@ import { memo, useCallback } from 'react'
 
 
 
-import { formatFileSize } from '@features/musicPlayer/services/fileService'
-
-
-
-import { usePlayerStore } from '@features/musicPlayer/store/playerStore'
+import { formatFileSize, usePlayerStore } from '@features/musicPlayer'
 
 import { useNavigationStore } from '../../store'
 

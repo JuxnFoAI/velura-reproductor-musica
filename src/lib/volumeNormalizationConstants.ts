@@ -60,12 +60,3 @@ export function isVolumeNormalizationModeId(value: unknown): value is VolumeNorm
     value === 'replaygain'
   )
 }
-
-/**
- * Devuelve la opción de modo por identificador.
- */
-export function getVolumeNormalizationModeById(
-  modeId: VolumeNormalizationModeId,
-): VolumeNormalizationModeOption | undefined {
-  return VOLUME_NORMALIZATION_MODE_OPTIONS.find((mode) => mode.id === modeId)
-}

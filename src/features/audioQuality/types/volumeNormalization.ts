@@ -4,7 +4,6 @@ export {
   DEFAULT_VOLUME_NORMALIZATION_MODE_ID,
   VOLUME_NORMALIZATION_MODE_OPTIONS,
   formatAppliedNormalizationGainDb,
-  getVolumeNormalizationModeById,
   isVolumeNormalizationModeId,
   type VolumeNormalizationModeId,
   type VolumeNormalizationModeOption,

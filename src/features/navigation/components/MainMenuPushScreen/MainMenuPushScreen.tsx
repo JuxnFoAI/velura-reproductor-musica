@@ -3,7 +3,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Cog, Heart, ListMusic, Music2 } from 'lucide-react'
 
-import { usePlaylistsStore } from '@features/musicPlayer/store/playlistsStore'
+import { MainMenuNavItem } from '@components/MainMenuNavItem'
+import {
+  AUDIO_QUALITY_SUBSECTION_TITLES,
+  AudioQualityOptionsMenu,
+} from '@features/audioQuality'
+import {
+  CUSTOMIZATION_SUBSECTION_TITLES,
+  LyricsFontsOptionsMenu,
+} from '@features/customization'
+import { usePlaylistsStore } from '@features/musicPlayer'
 import { usePushScreenVisibility } from '../../hooks'
 import { useNavigationStore } from '../../store'
 import {
@@ -12,17 +21,12 @@ import {
   MAIN_MENU_SECTION_TITLES,
   type MainMenuDestination,
 } from '../../types/mainMenu'
-import { CUSTOMIZATION_SUBSECTION_TITLES } from '../../types/customizationMenu'
-import { AUDIO_QUALITY_SUBSECTION_TITLES } from '../../types/audioQualityMenu'
 import { PLAYLISTS_ADD_SONGS_TITLE, PLAYLISTS_REMOVE_SONGS_TITLE } from '../../types/playlistsMenu'
 import { SETTINGS_SUBSECTION_TITLES } from '../../types/settingsMenu'
 import { MainMenuAllSongsOptionsMenu } from './MainMenuAllSongsOptionsMenu'
 import { MainMenuAllSongsSection } from './MainMenuAllSongsSection'
-import { MainMenuAudioQualityOptionsMenu } from './MainMenuAudioQualityOptionsMenu'
 import { MainMenuBrandFooter } from './MainMenuBrandFooter'
-import { MainMenuCustomizationFontsOptionsMenu } from './MainMenuCustomizationFontsOptionsMenu'
 import { MainMenuFavoritesSection } from './MainMenuFavoritesSection'
-import { MainMenuNavItem } from './MainMenuNavItem'
 import { MainMenuPlaylistsSection } from './MainMenuPlaylistsSection'
 import { MainMenuSettingsSection } from './MainMenuSettingsSection'
 
@@ -253,7 +257,7 @@ export function MainMenuPushScreen() {
               ) : null}
 
               {isFontsCustomizationSection ? (
-                <MainMenuCustomizationFontsOptionsMenu
+                <LyricsFontsOptionsMenu
                   isOpen={fontsOptionsOpen}
                   onToggle={handleToggleFontsOptions}
                   onClose={handleCloseFontsOptions}
@@ -261,7 +265,7 @@ export function MainMenuPushScreen() {
               ) : null}
 
               {isAudioQualityRootSection ? (
-                <MainMenuAudioQualityOptionsMenu
+                <AudioQualityOptionsMenu
                   isOpen={audioQualityOptionsOpen}
                   onToggle={handleToggleAudioQualityOptions}
                   onClose={handleCloseAudioQualityOptions}

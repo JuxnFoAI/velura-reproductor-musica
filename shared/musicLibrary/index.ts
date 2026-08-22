@@ -1,12 +1,9 @@
-/** Punto de entrada público del módulo de biblioteca musical compartido. */
+/** Punto de entrada público del módulo de biblioteca (seguro para el renderer). */
 export * from './constants'
+export * from './parseAudioFilename'
+export * from './buildAudioFilename'
 export * from './ipcChannels'
-export * from './payloadLimits'
-export * from './loadCoverOverrides'
+export * from './payloadGuards'
 export * from './mediaUrls'
-export * from './musicDirectoryResolver'
-export * from './musicLibraryService'
 export * from './result'
-export * from './seedMusicLibrary'
-export * from './safePaths'
 export * from './types'

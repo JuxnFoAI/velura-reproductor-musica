@@ -1,6 +1,5 @@
 /** Resuelve la carpeta mi-musica usada por el proceso main de Electron. */
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { app } from 'electron'
 import {
   BUNDLED_COVER_OVERRIDES_EXAMPLE_RESOURCE,
@@ -12,7 +11,7 @@ import {
   resolveProjectRootFromModule,
   resolveVeluraUserMusicDirectory,
   seedMusicLibraryIfNeeded,
-} from '../shared/musicLibrary'
+} from '../shared/musicLibrary/node'
 
 const projectRoot = resolveProjectRootFromModule(import.meta.url)
 
@@ -68,9 +67,4 @@ export function getElectronMusicDirectory(): string {
   }
 
   return cachedMusicDirectory
-}
-
-/** Ruta del bundle de Electron (desktop/dist); útil para depuración en desarrollo. */
-export function getDesktopBundleDirectory(): string {
-  return path.dirname(fileURLToPath(import.meta.url))
 }

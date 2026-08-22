@@ -6,6 +6,7 @@ import { usePlayerStore } from '../../store/playerStore'
 interface ProgressBarProps {
   disabled?: boolean
   showTimeLabels?: boolean
+  showHoverTime?: boolean
 }
 
 /**
@@ -14,6 +15,7 @@ interface ProgressBarProps {
 export const ProgressBar = memo(function ProgressBar({
   disabled = false,
   showTimeLabels = true,
+  showHoverTime = true,
 }: ProgressBarProps) {
   const currentTime = usePlayerStore((state) => state.currentTime)
   const duration = usePlayerStore((state) => state.duration)
@@ -85,9 +87,11 @@ export const ProgressBar = memo(function ProgressBar({
         return
       }
 
-      updateHoverPreview(clientX)
+      if (showHoverTime) {
+        updateHoverPreview(clientX)
+      }
     },
-    [isDragging, isInteractive, resolveTimeFromClientX, updateHoverPreview],
+    [isDragging, isInteractive, resolveTimeFromClientX, showHoverTime, updateHoverPreview],
   )
 
   const handlePointerUp = useCallback(
@@ -169,7 +173,7 @@ export const ProgressBar = memo(function ProgressBar({
           style={{ left: `calc(${progressRatio * 100}% - 6px)` }}
         />
 
-        {hoverTime !== null && !isDragging ? (
+        {showHoverTime && hoverTime !== null && !isDragging ? (
           <div
             className="pointer-events-none absolute -top-8 -translate-x-1/2 rounded-md bg-[var(--player-surface)] px-2 py-0.5 text-xs text-[var(--player-text)] shadow"
             style={{ left: `${hoverPosition}%` }}

@@ -2,15 +2,13 @@
 
 import { useAudioQualityBootstrap } from '@features/audioQuality'
 import { useLyricsFontBootstrap } from '@features/customization'
-import { useDesktopIslandSync } from '@features/musicPlayer'
 import { useDesktopAppDocumentClass } from './useDesktopAppDocumentClass'
 
 /**
- * Restaura personalización y calidad de audio, y sincroniza la isla de escritorio.
+ * Restaura personalización y calidad de audio al iniciar.
  */
 export function useAppBootstrap(): void {
   useDesktopAppDocumentClass()
   useLyricsFontBootstrap()
   useAudioQualityBootstrap()
-  useDesktopIslandSync()
 }
