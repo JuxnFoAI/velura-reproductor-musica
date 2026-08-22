@@ -35,5 +35,6 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "shared/desktop/**/*.ts"]
+  "include": ["src", "shared/desktop/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
 }

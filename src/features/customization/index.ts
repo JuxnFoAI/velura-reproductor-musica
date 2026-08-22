@@ -1,5 +1,10 @@
 /** Punto de entrada público del módulo de personalización. */
+export {
+  CustomizationSettingsSection,
+  LyricsFontsOptionsMenu,
+} from './components'
 export { useLyricsFontBootstrap } from './hooks/useLyricsFontBootstrap'
+export { buildCustomBackgroundImageFilter } from './lib/buildCustomBackgroundImageFilter'
 export { loadLyricsFont, preloadLyricsFonts } from './services/lyricsFontLoader'
 export { useCustomizationStore } from './store'
 export {
@@ -38,17 +43,9 @@ export {
 export {
   DEFAULT_PLAYER_BACKGROUND_MODE,
   PLAYER_BACKGROUND_OPTIONS,
-  getPlayerBackgroundOptionById,
   type PlayerBackgroundMode,
   type PlayerBackgroundOption,
 } from './types/playerBackground'
-export {
-  DEFAULT_DYNAMIC_ISLAND_COLOR_ID,
-  DYNAMIC_ISLAND_COLOR_OPTIONS,
-  getDynamicIslandColorById,
-  type DynamicIslandColorId,
-  type DynamicIslandColorOption,
-} from './types/dynamicIslandColors'
 export {
   BACKGROUND_ADJUSTMENT_MAX,
   BACKGROUND_ADJUSTMENT_MIN,
@@ -60,3 +57,8 @@ export {
   normalizePlayerBackgroundAdjustments,
   type PlayerBackgroundAdjustments,
 } from './types/playerBackgroundAdjustments'
+export {
+  CUSTOMIZATION_SUBSECTION_TITLES,
+  type CustomizationDestination,
+  type CustomizationSubSection,
+} from './types/customizationMenu'

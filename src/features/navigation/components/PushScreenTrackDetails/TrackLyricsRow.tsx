@@ -4,7 +4,7 @@ import { Pencil } from 'lucide-react'
 import {
   getLyricsFilename,
   LYRICS_FILE_ACCEPT,
-} from '@features/musicPlayer/services/lyricsFileService'
+} from '@features/musicPlayer'
 
 const PENCIL_ICON_SIZE_PX = 16
 const LYRICS_ADD_LABEL = 'agregar letra'

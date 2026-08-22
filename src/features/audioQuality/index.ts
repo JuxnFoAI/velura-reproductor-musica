@@ -1,6 +1,15 @@
 /** Punto de entrada público del módulo de calidad de audio. */
+export {
+  AudioQualityOptionsMenu,
+  AudioQualitySettingsSection,
+} from './components'
 export { useAudioQualityBootstrap } from './hooks/useAudioQualityBootstrap'
 export { useEqualizerStore, useVolumeNormalizationStore } from './store'
+export {
+  AUDIO_QUALITY_SUBSECTION_TITLES,
+  type AudioQualityDestination,
+  type AudioQualitySubSection,
+} from './types/audioQualityMenu'
 export {
   DEFAULT_EQUALIZER_PRESET_ID,
   EQUALIZER_PRESET_OPTIONS,

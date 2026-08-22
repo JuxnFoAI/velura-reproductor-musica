@@ -10,7 +10,7 @@ interface ControlButtonProps {
 }
 
 /**
- * Botón accesible compartido por los controles del reproductor y la isla dinámica.
+ * Botón accesible de los controles de transporte del reproductor.
  */
 export const ControlButton = memo(function ControlButton({
   ariaLabel,

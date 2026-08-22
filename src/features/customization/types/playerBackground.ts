@@ -24,15 +24,6 @@ export const PLAYER_BACKGROUND_OPTIONS: readonly PlayerBackgroundOption[] = [
 ] as const
 
 /**
- * Obtiene una opción de fondo por identificador.
- */
-export function getPlayerBackgroundOptionById(
-  mode: PlayerBackgroundMode,
-): PlayerBackgroundOption | undefined {
-  return PLAYER_BACKGROUND_OPTIONS.find((option) => option.id === mode)
-}
-
-/**
  * Comprueba si un valor es un modo de fondo válido.
  */
 export function isPlayerBackgroundMode(value: unknown): value is PlayerBackgroundMode {

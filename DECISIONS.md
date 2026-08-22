@@ -70,14 +70,6 @@ Ocultar la quita de "Todas las canciones" y de la cola visible, pero **no borra 
 
 ---
 
-## ¿Por qué existe la Isla dinámica solo en escritorio?
-
-En viewports pequeños no hay espacio útil para un widget flotante. En la app de escritorio empaquetada sí aporta controles rápidos sin salir de lo que estés haciendo. En desarrollo web se muestra igual para poder probar la UI en el navegador.
-
-**Si no lo hiciéramos así:** en móvil taparía contenido; en escritorio perderíamos acceso rápido a play/pausa y pista actual.
-
----
-
 ## ¿Por qué se restaura la sesión al volver a abrir la app?
 
 Guardamos qué pista sonaba, en qué segundo y si estaba en pausa. Así retomas donde lo dejaste sin buscar de nuevo en la biblioteca.
@@ -174,6 +166,8 @@ La lógica de indexar MP3, portadas y letras en disco debe servir tanto al plugi
 
 El plugin `vite-plugins/musicLibraryPlugin.ts` queda como capa delgada: parsea requests HTTP y delega en funciones como `buildMusicLibrary`, `saveTrackCover` o `renameTrack`.
 
+El barrel público `shared/musicLibrary` solo exporta tipos, constantes y parseo seguro para el renderer. Disco, `fs` y `music-metadata` salen por `shared/musicLibrary/node`, que usan Vite y Electron.
+
 **Si no lo hiciéramos así:** Electron reimplementaría reglas de renombrado, deduplicación y rutas seguras con riesgo de divergencia respecto al dev server.
 
 ---
@@ -191,6 +185,16 @@ El reproductor necesita estado compartido (cola, reproducción, menús) con poco
 No todos los MP3 traen ReplayGain y no todos quieren el mismo nivel sonoro. Forzarla siempre podría aplastar dinámica en pistas ya bien masterizadas.
 
 **Si no lo hiciéramos así:** algunas canciones sonarían artificialmente planas o demasiado fuertes según el modo elegido.
+
+---
+
+## ¿Por qué el renderer de Electron va con sandbox?
+
+Electron 35 ya sandboxea el renderer por defecto. Velura lo deja explícito en `true` en la ventana principal.
+
+El preload solo expone `contextBridge` e `ipcRenderer`. Se compila a CommonJS porque el sandbox de Chromium no tiene loader ESM. El main sigue en ESM. El preload no importa el barrel de `shared/musicLibrary`: ese barrel arrastra `music-metadata` y `fs`, que el renderer sandboxed no puede cargar.
+
+**Si no lo hiciéramos así:** `sandbox: false` daría un entorno Node al renderer sin necesidad. Un XSS o un preload roto tendría más superficie. Dejar el preload en ESM impediría encender el sandbox.
 
 ---
 

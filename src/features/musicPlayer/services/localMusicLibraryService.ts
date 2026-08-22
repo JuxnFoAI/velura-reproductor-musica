@@ -1,5 +1,5 @@
 /** Cliente de biblioteca MP3: IPC en Electron, HTTP en desarrollo web. */
-import { parseAudioFilename } from '@lib/parseAudioFilename'
+import { parseAudioFilename } from '@shared/musicLibrary'
 import type { Track } from '../types'
 import { getMusicLibraryTransport } from './musicLibraryTransport'
 

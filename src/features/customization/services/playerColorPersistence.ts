@@ -1,11 +1,12 @@
 /** Persistencia de los colores personalizados del reproductor. */
+import { createPersistedIdStorage } from '@lib/createPersistedIdStorage'
+
 import {
   DEFAULT_PLAYER_BUTTON_COLOR_ID,
   DEFAULT_PLAYER_LETTER_COLOR_ID,
   isPlayerButtonColorId,
   isPlayerLetterColorId,
 } from '../types/playerColors'
-import { createPersistedIdStorage } from './createPersistedIdStorage'
 
 const playerLetterColorStorage = createPersistedIdStorage({
   storageKey: 'music-player-letter-color',

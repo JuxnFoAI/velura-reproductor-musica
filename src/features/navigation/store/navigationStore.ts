@@ -2,13 +2,13 @@
 
 import { create } from 'zustand'
 
-import { revokeCoverUrl } from '@features/musicPlayer/services/fileService'
-
-import type { AudioQualityDestination, AudioQualitySubSection } from '../types/audioQualityMenu'
-import type { CustomizationDestination, CustomizationSubSection } from '../types/customizationMenu'
+import { revokeCoverUrl } from '@features/musicPlayer'
+import type { AudioQualityDestination, AudioQualitySubSection } from '@features/audioQuality'
+import type { CustomizationDestination, CustomizationSubSection } from '@features/customization'
 import type { MainMenuDestination, MainMenuSection } from '../types/mainMenu'
 import type { PlaylistsSubSection } from '../types/playlistsMenu'
 import type { SettingsDestination, SettingsSubSection } from '../types/settingsMenu'
+
 export interface CoverAdjustSession {
   trackId: string
   imageUrl: string

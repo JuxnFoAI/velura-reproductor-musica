@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from 'react'
 
-import { LYRICS_FORMAT_HINT } from '@features/musicPlayer/services/lyricsFileService'
+import { LYRICS_FORMAT_HINT } from '@features/musicPlayer'
 
 import { PushScreenTrackCover } from '../PushScreenTrackCover'
 import { PushScreenTrackDetails } from '../PushScreenTrackDetails'

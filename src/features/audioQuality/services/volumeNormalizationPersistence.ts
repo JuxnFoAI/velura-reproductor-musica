@@ -1,5 +1,6 @@
 /** Persistencia en localStorage de la normalización de volumen. */
 
+import { createPersistedJsonStorage, isJsonObject } from '@lib/createPersistedJsonStorage'
 import { isVolumeNormalizationModeId } from '@lib/volumeNormalizationConstants'
 
 import {
@@ -14,52 +15,31 @@ interface PersistedVolumeNormalizationSettings {
   modeId: VolumeNormalizationModeId
 }
 
-/**
- * Carga la configuración de normalización de volumen desde localStorage.
- */
-export function loadPersistedVolumeNormalizationSettings(): PersistedVolumeNormalizationSettings {
-  try {
-    const raw = localStorage.getItem(VOLUME_NORMALIZATION_STORAGE_KEY)
-
-    if (!raw) {
-      return createDefaultVolumeNormalizationSettings()
-    }
-
-    const parsed: unknown = JSON.parse(raw)
-
-    if (typeof parsed !== 'object' || parsed === null) {
-      return createDefaultVolumeNormalizationSettings()
-    }
-
-    const data = parsed as Partial<PersistedVolumeNormalizationSettings>
-
-    return {
-      isEnabled: data.isEnabled === true,
-      modeId: isVolumeNormalizationModeId(data.modeId)
-        ? data.modeId
-        : DEFAULT_VOLUME_NORMALIZATION_MODE_ID,
-    }
-  } catch {
-    return createDefaultVolumeNormalizationSettings()
-  }
+const DEFAULT_VOLUME_NORMALIZATION_SETTINGS: PersistedVolumeNormalizationSettings = {
+  isEnabled: false,
+  modeId: DEFAULT_VOLUME_NORMALIZATION_MODE_ID,
 }
 
-/**
- * Guarda la configuración de normalización de volumen en localStorage.
- */
-export function savePersistedVolumeNormalizationSettings(
-  settings: PersistedVolumeNormalizationSettings,
-): void {
-  try {
-    localStorage.setItem(VOLUME_NORMALIZATION_STORAGE_KEY, JSON.stringify(settings))
-  } catch {
-    // Ignorar errores de cuota o modo privado.
+function validateVolumeNormalizationSettings(
+  value: unknown,
+): PersistedVolumeNormalizationSettings | null {
+  if (!isJsonObject(value)) {
+    return null
   }
-}
 
-function createDefaultVolumeNormalizationSettings(): PersistedVolumeNormalizationSettings {
   return {
-    isEnabled: false,
-    modeId: DEFAULT_VOLUME_NORMALIZATION_MODE_ID,
+    isEnabled: value.isEnabled === true,
+    modeId: isVolumeNormalizationModeId(value.modeId)
+      ? value.modeId
+      : DEFAULT_VOLUME_NORMALIZATION_MODE_ID,
   }
 }
+
+const volumeNormalizationStorage = createPersistedJsonStorage(
+  VOLUME_NORMALIZATION_STORAGE_KEY,
+  DEFAULT_VOLUME_NORMALIZATION_SETTINGS,
+  validateVolumeNormalizationSettings,
+)
+
+export const loadPersistedVolumeNormalizationSettings = volumeNormalizationStorage.load
+export const savePersistedVolumeNormalizationSettings = volumeNormalizationStorage.save

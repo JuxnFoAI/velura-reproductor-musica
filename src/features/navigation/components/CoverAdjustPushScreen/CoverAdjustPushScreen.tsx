@@ -1,8 +1,7 @@
 /** Pantalla push para ajustar escala y rotación de la portada seleccionada. */
 import { useCallback, useEffect, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
-import { usePlayerStore } from '@features/musicPlayer/store/playerStore'
-import { toastStore } from '@features/musicPlayer/store/toastStore'
+import { toastStore, usePlayerStore } from '@features/musicPlayer'
 import { usePushScreenVisibility } from '../../hooks'
 import { renderAdjustedCover } from '../../lib/renderAdjustedCover'
 import { useNavigationStore } from '../../store'

@@ -4,13 +4,12 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { ChevronLeft } from 'lucide-react'
 
-import { fetchTrackLyricsContent } from '@features/musicPlayer/services/localMusicLibraryService'
-
-import { getLyricsFilename } from '@features/musicPlayer/services/lyricsFileService'
-
-import { usePlayerStore } from '@features/musicPlayer/store/playerStore'
-
-import { toastStore } from '@features/musicPlayer/store/toastStore'
+import {
+  fetchTrackLyricsContent,
+  getLyricsFilename,
+  toastStore,
+  usePlayerStore,
+} from '@features/musicPlayer'
 
 import { usePushScreenVisibility } from '../../hooks'
 

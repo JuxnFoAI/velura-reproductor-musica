@@ -1,5 +1,7 @@
 /** Tipos compartidos de la biblioteca musical local (Vite y Electron). */
 
+import type { LyricsExtension } from './constants'
+
 export interface MusicFileEntry {
   id: string
   filename: string
@@ -57,7 +59,7 @@ export interface DeleteTrackResponse {
   deletedLyricsCount: number
 }
 
-export type LyricsExtension = '.txt' | '.lrc'
+export type { LyricsExtension } from './constants'
 
 export interface SaveTrackLyricsRequest {
   trackRelativePath: string

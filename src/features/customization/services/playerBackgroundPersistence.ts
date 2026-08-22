@@ -1,5 +1,7 @@
 /** Persistencia del modo de fondo y la imagen personalizada del reproductor. */
 
+import { createPersistedJsonStorage, isJsonObject } from '@lib/createPersistedJsonStorage'
+
 import {
   DEFAULT_PLAYER_BACKGROUND_ADJUSTMENTS,
   normalizePlayerBackgroundAdjustments,
@@ -19,75 +21,37 @@ export interface PersistedPlayerBackground {
   adjustments: PlayerBackgroundAdjustments
 }
 
-/**
- * Carga las preferencias de fondo guardadas por el usuario.
- */
-export function loadPersistedPlayerBackground(): PersistedPlayerBackground {
-  try {
-    const raw = localStorage.getItem(PLAYER_BACKGROUND_STORAGE_KEY)
+const DEFAULT_PLAYER_BACKGROUND: PersistedPlayerBackground = {
+  mode: DEFAULT_PLAYER_BACKGROUND_MODE,
+  customBackgroundDataUrl: null,
+  adjustments: { ...DEFAULT_PLAYER_BACKGROUND_ADJUSTMENTS },
+}
 
-    if (!raw) {
-      return {
-        mode: DEFAULT_PLAYER_BACKGROUND_MODE,
-        customBackgroundDataUrl: null,
-        adjustments: { ...DEFAULT_PLAYER_BACKGROUND_ADJUSTMENTS },
-      }
-    }
+function readCustomBackgroundDataUrl(value: unknown): string | null {
+  if (typeof value !== 'string' || value.length === 0) {
+    return null
+  }
 
-    const parsed: unknown = JSON.parse(raw)
+  return value
+}
 
-    if (typeof parsed !== 'object' || parsed === null) {
-      return {
-        mode: DEFAULT_PLAYER_BACKGROUND_MODE,
-        customBackgroundDataUrl: null,
-        adjustments: { ...DEFAULT_PLAYER_BACKGROUND_ADJUSTMENTS },
-      }
-    }
+function validatePlayerBackground(value: unknown): PersistedPlayerBackground | null {
+  if (!isJsonObject(value)) {
+    return null
+  }
 
-    const record = parsed as {
-      mode?: unknown
-      customBackgroundDataUrl?: unknown
-      adjustments?: unknown
-    }
-
-    const mode = isPlayerBackgroundMode(record.mode)
-      ? record.mode
-      : DEFAULT_PLAYER_BACKGROUND_MODE
-
-    const customBackgroundDataUrl =
-      typeof record.customBackgroundDataUrl === 'string' &&
-      record.customBackgroundDataUrl.length > 0
-        ? record.customBackgroundDataUrl
-        : null
-
-    return {
-      mode,
-      customBackgroundDataUrl,
-      adjustments: normalizePlayerBackgroundAdjustments(record.adjustments),
-    }
-  } catch {
-    return {
-      mode: DEFAULT_PLAYER_BACKGROUND_MODE,
-      customBackgroundDataUrl: null,
-      adjustments: { ...DEFAULT_PLAYER_BACKGROUND_ADJUSTMENTS },
-    }
+  return {
+    mode: isPlayerBackgroundMode(value.mode) ? value.mode : DEFAULT_PLAYER_BACKGROUND_MODE,
+    customBackgroundDataUrl: readCustomBackgroundDataUrl(value.customBackgroundDataUrl),
+    adjustments: normalizePlayerBackgroundAdjustments(value.adjustments),
   }
 }
 
-/**
- * Guarda el modo de fondo y la imagen personalizada seleccionada.
- */
-export function savePersistedPlayerBackground({
-  mode,
-  customBackgroundDataUrl,
-  adjustments,
-}: PersistedPlayerBackground): void {
-  try {
-    localStorage.setItem(
-      PLAYER_BACKGROUND_STORAGE_KEY,
-      JSON.stringify({ mode, customBackgroundDataUrl, adjustments }),
-    )
-  } catch {
-    // Ignorar errores de cuota o modo privado.
-  }
-}
+const playerBackgroundStorage = createPersistedJsonStorage(
+  PLAYER_BACKGROUND_STORAGE_KEY,
+  DEFAULT_PLAYER_BACKGROUND,
+  validatePlayerBackground,
+)
+
+export const loadPersistedPlayerBackground = playerBackgroundStorage.load
+export const savePersistedPlayerBackground = playerBackgroundStorage.save

@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 
 import { equalizerBandGainsToArray, clampEqualizerGainDb, type EqualizerBandGains } from '@lib/equalizerConstants'
-import { audioEngine } from '@features/musicPlayer/services/audioEngine'
+import { audioEngine } from '@features/musicPlayer'
 
 import {
   loadPersistedEqualizerSettings,

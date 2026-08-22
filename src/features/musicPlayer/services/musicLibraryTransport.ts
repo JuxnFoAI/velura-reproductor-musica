@@ -1,82 +1,37 @@
 /** Transporte HTTP (Vite) o IPC (Electron) para operaciones de biblioteca musical. */
 import { isDesktopApp } from '@lib/runtimeEnvironment'
+import {
+  MUSIC_LIBRARY_ENDPOINTS,
+  isMusicLibraryErrorPayload,
+  isMusicLibraryResponse,
+  isRenameTrackResponse,
+  isSaveTrackCoverResponse,
+  isSaveTrackLyricsResponse,
+  type DeleteTrackRequest,
+  type MusicLibraryResponse,
+  type RenameTrackRequest,
+  type RenameTrackResponse,
+  type SaveTrackCoverRequest,
+  type SaveTrackCoverResponse,
+  type SaveTrackLyricsRequest,
+  type SaveTrackLyricsResponse,
+} from '@shared/musicLibrary'
 import type { VeluraMusicLibraryBridge } from '../../../types/veluraDesktop'
 
-const LIBRARY_TRACKS_ENDPOINT = '/api/music/tracks'
-const LIBRARY_TRACK_ENDPOINT = '/api/music/track'
-const LIBRARY_AUDIO_ENDPOINT = '/api/music/audio'
-const LIBRARY_COVER_ENDPOINT = '/api/music/cover'
-const LIBRARY_LYRICS_ENDPOINT = '/api/music/lyrics'
-
-interface MusicLibraryTrackDto {
-  id: string
-  filename: string
-  title: string
-  artist: string
-  relativePath: string
-  duration: number
-  fileSizeBytes: number
-  coverRelativePath: string | null
-  lyricsRelativePath: string | null
-  replayGainTrackDb: number | null
-}
-
-interface MusicLibraryResponseDto {
-  musicDirectory: string | null
-  tracks: MusicLibraryTrackDto[]
-}
-
-interface SaveTrackCoverPayload {
-  trackRelativePath: string
-  coverRelativePath: string | null
-  imageDataUrl: string
-}
-
-interface SaveTrackCoverResponse {
-  coverRelativePath: string
-}
-
-interface SaveTrackLyricsPayload {
-  trackRelativePath: string
-  lyricsContent: string
-  lyricsExtension: '.txt' | '.lrc'
-  existingLyricsRelativePath?: string | null
-  sourceLyricsFilename?: string | null
-}
-
-interface SaveTrackLyricsResponse {
-  lyricsRelativePath: string
-}
-
-interface RenameTrackPayload {
-  trackRelativePath: string
-  title: string
-  artist: string
-  coverRelativePath: string | null
-}
-
-interface RenameTrackResponse {
-  id: string
-  relativePath: string
-  filename: string
-  title: string
-  artist: string
-  coverRelativePath: string | null
-  lyricsRelativePath: string | null
-}
-
-interface DeleteTrackPayload {
-  trackRelativePath: string
-  coverRelativePath: string | null
-  lyricsRelativePath: string | null
-}
+const {
+  tracks: LIBRARY_TRACKS_ENDPOINT,
+  track: LIBRARY_TRACK_ENDPOINT,
+  audio: LIBRARY_AUDIO_ENDPOINT,
+  cover: LIBRARY_COVER_ENDPOINT,
+  lyrics: LIBRARY_LYRICS_ENDPOINT,
+} = MUSIC_LIBRARY_ENDPOINTS
 
 interface MusicLibraryTransport {
-  getTracks(): Promise<MusicLibraryResponseDto>
-  saveTrackCover(payload: SaveTrackCoverPayload): Promise<SaveTrackCoverResponse>
-  saveTrackLyrics(payload: SaveTrackLyricsPayload): Promise<SaveTrackLyricsResponse>
-  renameTrack(payload: RenameTrackPayload): Promise<RenameTrackResponse>
-  deleteTrack(payload: DeleteTrackPayload): Promise<void>
+  getTracks(): Promise<MusicLibraryResponse>
+  saveTrackCover(payload: SaveTrackCoverRequest): Promise<SaveTrackCoverResponse>
+  saveTrackLyrics(payload: SaveTrackLyricsRequest): Promise<SaveTrackLyricsResponse>
+  renameTrack(payload: RenameTrackRequest): Promise<RenameTrackResponse>
+  deleteTrack(payload: DeleteTrackRequest): Promise<void>
   buildAudioUrl(relativePath: string): string
   buildCoverUrl(coverRelativePath: string | null | undefined, cacheBust?: number): string | undefined
   buildLyricsUrl(relativePath: string, cacheBust?: number): string
@@ -93,9 +48,35 @@ function getDesktopBridge(): VeluraMusicLibraryBridge {
   return bridge
 }
 
+function assertDto<T>(
+  value: unknown,
+  guard: (value: unknown) => value is T,
+  errorMessage: string,
+): T {
+  if (!guard(value)) {
+    throw new Error(errorMessage)
+  }
+
+  return value
+}
+
 async function readHttpErrorMessage(response: Response, fallback: string): Promise<string> {
-  const errorPayload = (await response.json().catch(() => null)) as { message?: string } | null
-  return errorPayload?.message ?? fallback
+  const errorPayload: unknown = await response.json().catch(() => null)
+
+  if (isMusicLibraryErrorPayload(errorPayload)) {
+    return errorPayload.message
+  }
+
+  return fallback
+}
+
+async function readGuardedJson<T>(
+  response: Response,
+  guard: (value: unknown) => value is T,
+  errorMessage: string,
+): Promise<T> {
+  const payload: unknown = await response.json()
+  return assertDto(payload, guard, errorMessage)
 }
 
 function createHttpTransport(): MusicLibraryTransport {
@@ -107,7 +88,11 @@ function createHttpTransport(): MusicLibraryTransport {
         throw new Error('No se pudo cargar la biblioteca local de música.')
       }
 
-      return (await response.json()) as MusicLibraryResponseDto
+      return readGuardedJson(
+        response,
+        isMusicLibraryResponse,
+        'No se pudo cargar la biblioteca local de música.',
+      )
     },
 
     async saveTrackCover(payload) {
@@ -121,7 +106,11 @@ function createHttpTransport(): MusicLibraryTransport {
         throw new Error('No se pudo guardar la portada en la biblioteca local.')
       }
 
-      return (await response.json()) as SaveTrackCoverResponse
+      return readGuardedJson(
+        response,
+        isSaveTrackCoverResponse,
+        'No se pudo guardar la portada en la biblioteca local.',
+      )
     },
 
     async saveTrackLyrics(payload) {
@@ -137,7 +126,11 @@ function createHttpTransport(): MusicLibraryTransport {
         )
       }
 
-      return (await response.json()) as SaveTrackLyricsResponse
+      return readGuardedJson(
+        response,
+        isSaveTrackLyricsResponse,
+        'No se pudo guardar la letra en la biblioteca local.',
+      )
     },
 
     async renameTrack(payload) {
@@ -149,11 +142,18 @@ function createHttpTransport(): MusicLibraryTransport {
 
       if (!response.ok) {
         throw new Error(
-          await readHttpErrorMessage(response, 'No se pudo renombrar la canción en la biblioteca local.'),
+          await readHttpErrorMessage(
+            response,
+            'No se pudo renombrar la canción en la biblioteca local.',
+          ),
         )
       }
 
-      return (await response.json()) as RenameTrackResponse
+      return readGuardedJson(
+        response,
+        isRenameTrackResponse,
+        'No se pudo renombrar la canción en la biblioteca local.',
+      )
     },
 
     async deleteTrack(payload) {
@@ -249,8 +249,9 @@ function createIpcTransport(bridge: VeluraMusicLibraryBridge): MusicLibraryTrans
       const response = await fetch(this.buildLyricsUrl(relativePath, cacheBust))
 
       if (!response.ok) {
-        const errorPayload = (await response.json().catch(() => null)) as { message?: string } | null
-        throw new Error(errorPayload?.message ?? 'No se pudo cargar la letra seleccionada.')
+        throw new Error(
+          await readHttpErrorMessage(response, 'No se pudo cargar la letra seleccionada.'),
+        )
       }
 
       return response.text()

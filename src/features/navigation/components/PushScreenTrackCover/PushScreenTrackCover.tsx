@@ -1,8 +1,7 @@
 /** Portada interactiva de la pista activa en el panel push de información. */
 import { memo, useCallback, useRef, type ChangeEvent } from 'react'
 import { Plus } from 'lucide-react'
-import { usePlayerStore } from '@features/musicPlayer/store/playerStore'
-import { toastStore } from '@features/musicPlayer/store/toastStore'
+import { toastStore, usePlayerStore } from '@features/musicPlayer'
 import { useNavigationStore } from '../../store'
 
 const PUSH_COVER_SIZE_CLASS = 'aspect-square w-full max-w-52'

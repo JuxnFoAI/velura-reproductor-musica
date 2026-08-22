@@ -3,13 +3,14 @@
 import { AudioLines, FolderOpen, Info, Palette } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+import { MainMenuNavItem } from '@components/MainMenuNavItem'
+import { AudioQualitySettingsSection } from '@features/audioQuality'
+import { CustomizationSettingsSection } from '@features/customization'
+
 import { useNavigationStore } from '../../store'
 import { SETTINGS_OPTIONS, type SettingsDestination } from '../../types/settingsMenu'
 import { MainMenuAboutSection } from './MainMenuAboutSection'
-import { MainMenuAudioQualitySection } from './MainMenuAudioQualitySection'
-import { MainMenuCustomizationSection } from './MainMenuCustomizationSection'
 import { MainMenuMusicLibrarySection } from './MainMenuMusicLibrarySection'
-import { MainMenuNavItem } from './MainMenuNavItem'
 
 const SETTINGS_ICONS: Record<SettingsDestination, LucideIcon> = {
   'music-library': FolderOpen,
@@ -23,18 +24,36 @@ const SETTINGS_ICONS: Record<SettingsDestination, LucideIcon> = {
  */
 export function MainMenuSettingsSection() {
   const settingsSubSection = useNavigationStore((state) => state.settingsSubSection)
+  const audioQualitySubSection = useNavigationStore((state) => state.audioQualitySubSection)
+  const customizationSubSection = useNavigationStore((state) => state.customizationSubSection)
   const openSettingsSubSection = useNavigationStore((state) => state.openSettingsSubSection)
+  const openAudioQualitySubSection = useNavigationStore(
+    (state) => state.openAudioQualitySubSection,
+  )
+  const openCustomizationSubSection = useNavigationStore(
+    (state) => state.openCustomizationSubSection,
+  )
 
   if (settingsSubSection === 'music-library') {
     return <MainMenuMusicLibrarySection />
   }
 
   if (settingsSubSection === 'audio-quality') {
-    return <MainMenuAudioQualitySection />
+    return (
+      <AudioQualitySettingsSection
+        subSection={audioQualitySubSection}
+        onOpenSubSection={openAudioQualitySubSection}
+      />
+    )
   }
 
   if (settingsSubSection === 'customization') {
-    return <MainMenuCustomizationSection />
+    return (
+      <CustomizationSettingsSection
+        subSection={customizationSubSection}
+        onOpenSubSection={openCustomizationSubSection}
+      />
+    )
   }
 
   if (settingsSubSection === 'about') {

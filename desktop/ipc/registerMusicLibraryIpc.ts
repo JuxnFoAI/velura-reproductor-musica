@@ -14,7 +14,7 @@ import {
   type RenameTrackRequest,
   type SaveTrackCoverRequest,
   type SaveTrackLyricsRequest,
-} from '../../shared/musicLibrary'
+} from '../../shared/musicLibrary/node'
 import { getElectronMusicDirectory } from '../musicDirectory'
 import { assertMainWindowSender } from '../security/ipcMainWindowGuard'
 

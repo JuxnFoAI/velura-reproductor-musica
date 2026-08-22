@@ -1,9 +1,10 @@
 /** Persistencia de la fuente seleccionada para el modo letra. */
+import { createPersistedIdStorage } from '@lib/createPersistedIdStorage'
+
 import {
   DEFAULT_LYRICS_FONT_ID,
   isLyricsFontId,
 } from '../types/lyricsFonts'
-import { createPersistedIdStorage } from './createPersistedIdStorage'
 
 const lyricsFontStorage = createPersistedIdStorage({
   storageKey: 'music-player-lyrics-font',
