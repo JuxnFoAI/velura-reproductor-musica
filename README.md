@@ -21,8 +21,8 @@ Elige el camino que corresponda a lo que quieres hacer:
 1. **Instalar dependencias** (solo la primera vez):
 
 ```bash
-git clone https://github.com/JuxnFoAI/velura.git
-cd velura
+git clone https://github.com/JuxnFoAI/velura-reproductor-musica.git
+cd velura-reproductor-musica
 npm install
 ```
 
@@ -59,8 +59,8 @@ Abre en el navegador la URL que muestra Vite (normalmente `http://localhost:5173
 Requisitos: **Node.js 20+** y **npm**.
 
 ```bash
-git clone https://github.com/JuxnFoAI/velura.git
-cd velura
+git clone https://github.com/JuxnFoAI/velura-reproductor-musica.git
+cd velura-reproductor-musica
 npm install
 ```
 
